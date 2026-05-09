@@ -1,0 +1,90 @@
+/* ============================================================
+   PROCEDIMIENTO.CSS — Pestaña Trámites / Procedimiento
+   ============================================================
+   Steps por día, line-dot timeline, tags por área,
+   prerrequisitos, gates, fechas registradas.
+   ============================================================ */
+
+/* Container del paso individual */
+.step{
+  display:flex;
+  align-items:stretch;
+  transition:opacity .3s;
+}
+
+/* Línea vertical con punto */
+.step-line{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  width:30px;
+  flex-shrink:0;
+}
+.step-dot{
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:all .3s;
+}
+.step-bar{
+  width:2px;
+  flex:1;
+}
+
+/* Cuerpo del paso */
+.step-body{
+  flex:1;
+  margin-left:5px;
+  margin-bottom:6px;
+  padding:10px 12px;
+  border-radius:var(--r);
+  transition:all .3s;
+  background:var(--sf);
+  border:0.5px solid var(--bd);
+  color:#ddd;
+}
+.step-body.active{
+  padding:14px;
+}
+
+/* Tags dentro del paso */
+.step-tag{
+  font-size:9px;
+  font-weight:500;
+  padding:2px 7px;
+  border-radius:4px;
+  display:inline-block;
+  margin-right:3px;
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+}
+
+/* Título del paso */
+.step-t{
+  margin:3px 0 0;
+  font-size:13px;
+  font-weight:500;
+}
+
+/* Botón "moto reciente" en menú inicial */
+.recent-btn{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  width:100%;
+  padding:10px 14px;
+  border-radius:var(--r);
+  border:0.5px solid var(--bd);
+  background:var(--sf);
+  cursor:pointer;
+  margin-bottom:4px;
+  text-align:left;
+  color:#ccc;
+  transition:all 0.15s;
+}
+.recent-btn:hover{
+  border-color:var(--bd2);
+  background:var(--sf2);
+  transform:translateX(2px);
+}

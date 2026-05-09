@@ -1,0 +1,273 @@
+/* ============================================================
+   COMPONENTS.CSS — Componentes UI reusables
+   ============================================================
+   Botones, cards, inputs, toasts, badges, sub-tabs.
+   Componentes que se usan en TODA la app, no solo en un módulo.
+   ============================================================ */
+
+/* ============================================================
+   LABELS
+   ============================================================ */
+.lbl{
+  font-size:10px;
+  font-weight:500;
+  color:#888;
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+  margin-bottom:8px;
+  display:block;
+}
+
+/* ============================================================
+   FLEX UTILITIES
+   ============================================================ */
+.flex{
+  display:flex;
+  gap:8px;
+}
+.fxc{align-items:center}
+.fxb{justify-content:space-between}
+
+.pad{padding:0}
+
+/* ============================================================
+   TOAST (notificación flotante)
+   ============================================================ */
+.toast{
+  position:fixed;
+  top:14px;
+  left:50%;
+  transform:translateX(-50%) translateY(-80px);
+  background:var(--gn);
+  color:#fff;
+  padding:10px 20px;
+  border-radius:var(--r);
+  font-size:13px;
+  font-weight:600;
+  z-index:999;
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+  max-width:90vw;
+  text-align:center;
+  box-shadow:0 4px 16px rgba(0,0,0,0.4);
+}
+.toast.show{
+  transform:translateX(-50%) translateY(0);
+}
+.toast.err{
+  background:var(--rd);
+  color:#fff;
+}
+
+/* ============================================================
+   SUB-TABS
+   ============================================================ */
+.sub-tabs{
+  display:flex;
+  gap:6px;
+  margin-bottom:18px;
+  flex-wrap:wrap;
+}
+.sub-tab{
+  padding:8px 16px;
+  border:0.5px solid var(--bd2);
+  border-radius:6px;
+  background:var(--sf2);
+  font-family:var(--ff);
+  font-size:12px;
+  color:#aaa;
+  cursor:pointer;
+  transition:all 0.15s;
+}
+.sub-tab:hover{color:#ccc}
+.sub-tab.on{
+  background:rgba(226,75,74,0.1);
+  color:var(--rdd);
+  border-color:#A32D2D;
+  font-weight:500;
+}
+
+/* ============================================================
+   INPUTS
+   ============================================================ */
+.inp{
+  width:100%;
+  padding:12px 14px;
+  border-radius:var(--r);
+  border:0.5px solid var(--bd2);
+  background:var(--sf2);
+  font-family:var(--fm);
+  font-size:14px;
+  font-weight:500;
+  color:var(--tx);
+  text-align:center;
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+  outline:none;
+  box-sizing:border-box;
+}
+.inp:focus{border-color:var(--rd)}
+
+.inp-sm{
+  font-size:11px;
+  padding:8px 12px;
+  text-align:left;
+  letter-spacing:0;
+  font-family:var(--ff);
+  font-weight:400;
+  text-transform:none;
+  color:#ccc;
+}
+.inp-sm::placeholder{color:#666}
+
+/* Select */
+.sel{
+  width:100%;
+  padding:11px 14px;
+  border-radius:var(--r);
+  border:0.5px solid var(--bd2);
+  background:var(--sf2);
+  font-family:var(--ff);
+  font-size:13px;
+  color:var(--tx);
+  outline:none;
+  box-sizing:border-box;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn{
+  width:100%;
+  padding:11px;
+  border-radius:var(--r);
+  font-family:var(--ff);
+  font-size:13px;
+  font-weight:500;
+  cursor:pointer;
+  border:none;
+  transition:all .15s;
+}
+.btn:active{transform:scale(.98)}
+.btn:disabled{
+  opacity:.35;
+  cursor:default;
+}
+
+.btn-p{
+  background:var(--rd);
+  color:white;
+}
+.btn-p:hover{background:#D03B3A}
+
+.btn-o{
+  background:var(--sf2);
+  border:0.5px solid var(--bd2);
+  color:#ccc;
+}
+.btn-o:hover{
+  background:rgba(255,255,255,0.07);
+  color:#fff;
+}
+
+.btn-d{
+  background:transparent;
+  border:0.5px solid var(--rd);
+  color:var(--rd);
+}
+
+.btn-v{
+  background:var(--gn);
+  color:#fff;
+}
+
+/* ============================================================
+   CARDS
+   ============================================================ */
+.card{
+  padding:14px 16px;
+  border-radius:var(--r);
+  background:var(--sf);
+  border:0.5px solid var(--bd);
+  margin-bottom:10px;
+}
+
+/* ============================================================
+   BADGES
+   ============================================================ */
+.badge{
+  display:inline-block;
+  font-size:10px;
+  font-weight:500;
+  padding:3px 9px;
+  border-radius:4px;
+}
+
+/* ============================================================
+   CONNECTION INDICATOR
+   ============================================================ */
+.conn{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  font-size:10px;
+  font-weight:500;
+}
+.conn-dot{
+  width:7px;
+  height:7px;
+  border-radius:50%;
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+.empty{
+  text-align:center;
+  padding:60px 20px;
+  color:#555;
+  font-size:13px;
+}
+
+/* ============================================================
+   STAT CARDS (resumen)
+   ============================================================ */
+.stat-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+.stat-card{
+  background:var(--sf);
+  border:0.5px solid var(--bd);
+  border-radius:var(--r);
+  padding:14px;
+  text-align:center;
+  transition:transform 0.15s;
+  color:#ddd;
+}
+.stat-card:hover{
+  transform:translateY(-2px);
+  border-color:var(--bd2);
+}
+.stat-num{
+  font-family:var(--fm);
+  font-size:26px;
+  font-weight:500;
+}
+.stat-lbl{
+  font-size:9px;
+  font-weight:500;
+  color:#888;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  margin-top:4px;
+}
+
+@media(max-width:768px){
+  .stat-grid{grid-template-columns:1fr 1fr}
+}
+
+/* Sticky header transparente sobre fondo dark */
+[id="stickyTop"]{
+  background:var(--bg)!important;
+}

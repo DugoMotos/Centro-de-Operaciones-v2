@@ -1,0 +1,313 @@
+/* ============================================================
+   NEGOCIOS.CSS — Pestaña Negocios
+   ============================================================
+   Tabla de motos con filtros, ordenamiento, progress bars,
+   tags de actividad en curso, badges de marca.
+   ============================================================ */
+
+/* Filtros desplegables */
+.neg-filters{
+  display:flex;
+  align-items:flex-end;
+  gap:14px;
+  margin-bottom:18px;
+  flex-wrap:wrap;
+}
+.neg-filter-block{
+  display:flex;
+  flex-direction:column;
+}
+.neg-select-label{
+  font-size:9px;
+  color:#666;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+  display:block;
+  margin-bottom:5px;
+}
+.neg-select{
+  background:rgba(255,255,255,0.04);
+  border:0.5px solid rgba(255,255,255,0.12);
+  color:#ddd;
+  padding:9px 32px 9px 14px;
+  font-size:12px;
+  font-family:var(--ff);
+  border-radius:6px;
+  outline:none;
+  cursor:pointer;
+  min-width:200px;
+  appearance:none;
+  background-image:url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath fill='%23888' d='M0 0l4 5 4-5z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 12px center;
+  background-size:8px;
+}
+.neg-select:focus{border-color:var(--rd)}
+
+/* Tabla */
+.neg-table{
+  border:0.5px solid var(--bd);
+  border-radius:8px;
+  overflow:hidden;
+  margin-top:14px;
+}
+.neg-table-bar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:12px 18px;
+  border-bottom:0.5px solid var(--bd);
+  background:rgba(255,255,255,0.015);
+  gap:10px;
+  flex-wrap:wrap;
+}
+.neg-table-count{
+  font-size:10px;
+  color:#888;
+  letter-spacing:1.5px;
+}
+
+/* Columnas (grid) */
+.neg-cols{
+  display:grid;
+  grid-template-columns:90px 1.4fr 110px 1.4fr 1.4fr 90px;
+  gap:18px;
+  align-items:center;
+}
+
+/* Encabezados */
+.neg-table-head{
+  padding:11px 18px;
+  font-size:9px;
+  color:#777;
+  letter-spacing:1.5px;
+  border-bottom:0.5px solid var(--bd);
+}
+.neg-th{
+  cursor:pointer;
+  user-select:none;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  transition:color 0.15s;
+}
+.neg-th:hover{color:#ccc}
+.neg-th.active{color:var(--rdd)}
+.neg-th.right{justify-content:flex-end}
+.neg-th-arrow{
+  font-size:8px;
+  line-height:1;
+  display:inline-flex;
+  flex-direction:column;
+  color:#444;
+  margin-left:2px;
+}
+.neg-th-arrow span{line-height:0.8}
+.neg-th-arrow .up.on,
+.neg-th-arrow .dn.on{color:var(--rdd)}
+
+/* Filas */
+.neg-row{
+  padding:13px 18px;
+  border-bottom:0.5px solid rgba(255,255,255,0.04);
+  cursor:pointer;
+  transition:background 0.1s;
+}
+.neg-row:last-child{border-bottom:none}
+.neg-row:hover{background:rgba(226,75,74,0.04)}
+
+/* Código de barras */
+.neg-code{
+  font-family:var(--fm);
+  font-size:13px;
+  color:var(--rd);
+  font-weight:500;
+}
+
+.neg-cell{font-size:13px}
+.neg-fecha{
+  font-family:var(--fm);
+  font-size:11px;
+  color:#888;
+}
+
+/* Marca badge */
+.neg-mark{
+  font-size:9px;
+  font-weight:500;
+  padding:3px 7px;
+  border-radius:3px;
+  display:inline-block;
+  margin-top:3px;
+}
+.neg-mark.hero{
+  background:var(--gnl);
+  color:var(--gnd);
+}
+.neg-mark.sym{
+  background:var(--orl);
+  color:#F0997B;
+}
+.neg-mark.otra{
+  background:rgba(255,255,255,0.06);
+  color:#aaa;
+}
+
+/* Tag de actividad en curso */
+.neg-tag{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:4px;
+  font-size:11px;
+  border:0.5px solid;
+  white-space:nowrap;
+  max-width:200px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.neg-tag-warn{
+  background:var(--yll);
+  color:var(--yld);
+  border-color:#BA7517;
+}
+.neg-tag-purple{
+  background:var(--prl);
+  color:#AFA9EC;
+  border-color:#534AB7;
+}
+.neg-tag-red{
+  background:var(--rdl);
+  color:var(--rdd);
+  border-color:#A32D2D;
+}
+.neg-tag-green{
+  background:var(--vll);
+  color:var(--vlb);
+  border-color:#639922;
+}
+.neg-tag-blue{
+  background:var(--bll);
+  color:var(--bld);
+  border-color:#378ADD;
+}
+.neg-tag-empty{
+  background:rgba(255,255,255,0.04);
+  color:#666;
+  border-color:rgba(255,255,255,0.1);
+}
+
+/* Progress bar */
+.neg-progress{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.neg-progress-bar{
+  flex:1;
+  height:6px;
+  background:rgba(255,255,255,0.08);
+  border-radius:3px;
+  overflow:hidden;
+}
+.neg-progress-fill{
+  height:100%;
+  border-radius:3px;
+  transition:width 0.4s;
+}
+.neg-progress-pct{
+  font-size:11px;
+  font-family:var(--fm);
+  min-width:36px;
+  text-align:right;
+  font-weight:500;
+}
+
+/* Días en proceso */
+.neg-days-warn{
+  color:var(--yl);
+  font-weight:500;
+}
+.neg-days-danger{
+  color:var(--rd);
+  font-weight:500;
+}
+
+/* Comentario */
+.neg-comment-icon{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  cursor:pointer;
+  background:var(--yll);
+  border:0.5px solid #BA7517;
+  color:var(--yl);
+  flex-shrink:0;
+  margin-left:8px;
+  position:relative;
+}
+.neg-comment-icon:hover{
+  background:rgba(186,117,23,0.3);
+}
+.neg-comment-dot{
+  position:absolute;
+  top:-2px;
+  right:-2px;
+  width:8px;
+  height:8px;
+  background:var(--rd);
+  border-radius:50%;
+  border:1.5px solid var(--bg);
+}
+.neg-comment-spacer{
+  display:inline-block;
+  width:32px;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media(max-width:900px){
+  .neg-cols{
+    grid-template-columns:80px 1.3fr 90px 1.3fr 1.2fr 70px;
+    gap:10px;
+  }
+}
+
+@media(max-width:768px){
+  .neg-cols{
+    grid-template-columns:70px 1.2fr 80px 1fr 1fr 50px;
+    gap:8px;
+  }
+  .neg-table-bar{padding:10px 14px}
+  .neg-table-bar input{
+    width:100%!important;
+    max-width:none!important;
+  }
+  .neg-filters{
+    flex-direction:column;
+    align-items:stretch;
+    gap:10px;
+  }
+  .neg-filter-block,
+  .neg-select{
+    width:100%;
+    min-width:0;
+  }
+  .neg-cell{font-size:12px}
+  .neg-mark{
+    font-size:8px;
+    padding:2px 5px;
+  }
+}
+
+@media(max-width:480px){
+  .neg-cols{
+    grid-template-columns:60px 1.2fr 60px 1fr 60px 40px;
+    gap:6px;
+  }
+  .neg-table-head>div:nth-child(5){display:none}
+  .neg-cols>div:nth-child(5){display:none}
+}

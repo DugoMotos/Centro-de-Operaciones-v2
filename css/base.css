@@ -1,0 +1,112 @@
+/* ============================================================
+   BASE.CSS — Variables, reset, tipografía, body
+   ============================================================
+   Aquí van las variables globales del sistema de diseño
+   y los estilos base que afectan a TODA la app.
+   ============================================================ */
+
+:root{
+  /* Backgrounds */
+  --bg:#0A0A0A;
+  --sf:rgba(255,255,255,0.02);
+  --sf2:rgba(255,255,255,0.04);
+
+  /* Borders */
+  --bd:rgba(255,255,255,0.06);
+  --bd2:rgba(255,255,255,0.12);
+
+  /* Text */
+  --tx:#E8E8E8;
+  --tm:#888;
+  --tl:#555;
+
+  /* Brand */
+  --rd:#E24B4A;
+  --rdl:rgba(226,75,74,0.1);
+  --rdd:#F09595;
+
+  /* Status colors — Green (Hero / completado) */
+  --gn:#1D9E75;
+  --gnl:rgba(29,158,117,0.15);
+  --gnd:#5DCAA5;
+
+  /* Status colors — Blue (info / registro) */
+  --bl:#378ADD;
+  --bll:rgba(55,138,221,0.15);
+  --bld:#85B7EB;
+
+  /* Status colors — Orange (SYM / advertencia leve) */
+  --or:#D85A30;
+  --orl:rgba(216,90,48,0.15);
+
+  /* Status colors — Yellow (warning) */
+  --yl:#EF9F27;
+  --yll:rgba(186,117,23,0.15);
+  --yld:#EF9F27;
+
+  /* Status colors — Purple (alistamientos / venta) */
+  --pr:#7F77DD;
+  --prl:rgba(127,119,221,0.15);
+
+  /* Status colors — Light green (validación) */
+  --vl:#27500A;
+  --vll:rgba(99,153,34,0.18);
+  --vlb:#97C459;
+
+  /* Status colors — Cyan (GPS) */
+  --cy:#22D3EE;
+
+  /* Layout */
+  --r:8px;
+
+  /* Typography */
+  --ff:'DM Sans',system-ui,sans-serif;
+  --fm:'DM Mono',monospace;
+}
+
+/* Reset */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+/* Body */
+body{
+  font-family:var(--ff);
+  background:#000;
+  color:var(--tx);
+  min-height:100dvh;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar{
+  width:8px;
+  height:8px;
+}
+::-webkit-scrollbar-track{
+  background:transparent;
+}
+::-webkit-scrollbar-thumb{
+  background:rgba(255,255,255,0.1);
+  border-radius:4px;
+}
+::-webkit-scrollbar-thumb:hover{
+  background:rgba(255,255,255,0.2);
+}
+
+/* Date inputs dark mode */
+input[type="date"].inp-sm,
+input[type="text"].inp-sm,
+select.inp-sm{
+  color-scheme:dark;
+}
+input[type="date"]::-webkit-calendar-picker-indicator{
+  filter:invert(0.7);
+}
+
+select option{
+  background:#1a1a1a;
+  color:#ddd;
+}

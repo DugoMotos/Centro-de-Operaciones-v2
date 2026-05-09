@@ -1,0 +1,14 @@
+/* ============================================================
+   PLAN.CSS — Pestaña Plan de alistamientos
+   ============================================================
+   Cards de plan con datos de SharePoint BD_Plan.
+   ============================================================ */
+
+/* Las cards del plan ya usan los estilos genéricos de .card,
+   pero pueden agregarse aquí estilos específicos cuando
+   necesitemos diferenciar visualmente este módulo. */
+
+/* Loading spinner reutilizable */
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}

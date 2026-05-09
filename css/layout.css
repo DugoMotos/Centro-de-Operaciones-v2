@@ -1,0 +1,309 @@
+/* ============================================================
+   LAYOUT.CSS — Estructura de la página
+   ============================================================
+   App grid, sidebar, mobile bar, área principal, responsive.
+   Aquí va todo lo que define el LAYOUT de la página, no los
+   componentes internos.
+   ============================================================ */
+
+/* App container */
+.app{
+  max-width:100%;
+  width:100%;
+  margin:0;
+  background:var(--bg);
+  min-height:100dvh;
+  display:grid;
+  grid-template-columns:230px 1fr;
+  border:none;
+}
+
+/* Main content area */
+.main{
+  padding:28px 32px;
+  overflow-x:hidden;
+}
+
+/* Headers (eyebrow, h1, sub-title) */
+.eyebrow{
+  font-size:9px;
+  color:#888;
+  letter-spacing:2.5px;
+  font-weight:500;
+  margin-bottom:6px;
+  text-transform:uppercase;
+}
+.h1{
+  font-size:26px;
+  font-weight:500;
+  line-height:1;
+  margin-bottom:6px;
+}
+.sub-title{
+  font-size:13px;
+  color:#888;
+  margin-bottom:22px;
+}
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+.side{
+  background:var(--bg);
+  border-right:0.5px solid var(--bd);
+  padding:20px 0;
+  overflow-y:auto;
+  min-height:100dvh;
+}
+
+.side-brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:0 18px 18px;
+  border-bottom:0.5px solid var(--bd);
+  margin-bottom:14px;
+}
+.side-logo{
+  width:26px;
+  height:26px;
+  background:var(--rd);
+  border-radius:4px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:11px;
+  font-weight:500;
+  color:white;
+  letter-spacing:0.5px;
+}
+.side-name{
+  font-size:13px;
+  font-weight:500;
+  letter-spacing:1px;
+}
+.side-sub{
+  font-size:10px;
+  color:#666;
+  letter-spacing:0.5px;
+  margin-left:auto;
+}
+
+.side-group{
+  padding:14px 0 6px;
+}
+.side-group-title{
+  font-size:9px;
+  color:var(--tl);
+  letter-spacing:2px;
+  padding:0 18px 8px;
+  text-transform:uppercase;
+}
+
+.side-link{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 18px;
+  font-size:13px;
+  color:#aaa;
+  cursor:pointer;
+  border-left:2px solid transparent;
+  transition:all 0.15s;
+  user-select:none;
+}
+.side-link:hover{
+  background:rgba(255,255,255,0.03);
+  color:#ddd;
+}
+.side-link.on{
+  background:rgba(226,75,74,0.08);
+  color:white;
+  border-left-color:var(--rd);
+  font-weight:500;
+}
+.side-link svg{
+  flex-shrink:0;
+  opacity:0.7;
+}
+.side-link.on svg{
+  opacity:1;
+}
+
+.side-chevron{
+  margin-left:auto;
+  font-size:10px;
+  color:#666;
+  transition:transform 0.2s;
+}
+.side-link.parent.expanded .side-chevron{
+  transform:rotate(90deg);
+  color:#aaa;
+}
+
+.side-badge{
+  margin-left:auto;
+  font-size:10px;
+  background:var(--rd);
+  color:white;
+  padding:1px 8px;
+  border-radius:10px;
+  font-weight:500;
+  font-family:var(--fm);
+}
+.side-link.parent.expanded .side-badge{
+  margin-left:0;
+  margin-right:8px;
+}
+
+/* Sub-navigation (sublinks under expandable parent) */
+.side-sub{
+  max-height:0;
+  overflow:hidden;
+  transition:max-height 0.25s ease;
+}
+.side-sub.open{
+  max-height:240px;
+}
+
+.sublink{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 18px 8px 44px;
+  font-size:12px;
+  color:#888;
+  cursor:pointer;
+  border-left:2px solid transparent;
+  transition:all 0.15s;
+  user-select:none;
+}
+.sublink:hover{
+  background:rgba(255,255,255,0.03);
+  color:#ccc;
+}
+.sublink.on{
+  background:rgba(226,75,74,0.06);
+  color:var(--rdd);
+  border-left-color:#A32D2D;
+  font-weight:500;
+}
+.sublink svg{
+  opacity:0.6;
+}
+.sublink.on svg{
+  opacity:1;
+}
+
+/* ============================================================
+   MOBILE BAR (visible solo en móvil)
+   ============================================================ */
+.mobile-bar{
+  display:none;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media(min-width:1600px){
+  .main{
+    padding:32px 48px;
+  }
+}
+
+@media(max-width:768px){
+  .app{
+    grid-template-columns:1fr;
+  }
+  .side{
+    position:fixed;
+    top:0;
+    left:-260px;
+    width:260px;
+    height:100dvh;
+    z-index:100;
+    transition:left 0.25s ease;
+    box-shadow:8px 0 24px rgba(0,0,0,0.5);
+    overflow-y:auto;
+  }
+  .side.open{
+    left:0;
+  }
+  .side-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.6);
+    z-index:99;
+  }
+  .side-overlay.show{
+    display:block;
+  }
+  .mobile-bar{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px 16px;
+    border-bottom:0.5px solid var(--bd);
+    background:var(--bg);
+    position:sticky;
+    top:0;
+    z-index:50;
+  }
+  .mobile-burger{
+    width:36px;
+    height:36px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    background:rgba(255,255,255,0.04);
+    border:0.5px solid var(--bd2);
+    border-radius:6px;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .mobile-burger span{
+    width:18px;
+    height:2px;
+    background:#ddd;
+    border-radius:1px;
+  }
+  .mobile-title{
+    flex:1;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .mobile-title-logo{
+    width:24px;
+    height:24px;
+    background:var(--rd);
+    border-radius:4px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:10px;
+    font-weight:500;
+    color:white;
+    letter-spacing:0.5px;
+  }
+  .mobile-title-name{
+    font-size:13px;
+    font-weight:500;
+    letter-spacing:1px;
+  }
+  .main{
+    padding:18px 16px;
+  }
+  .h1{
+    font-size:22px;
+  }
+}
+
+@media(max-width:480px){
+  .main{
+    padding:14px 12px;
+  }
+}
