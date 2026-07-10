@@ -3,12 +3,12 @@
    ============================================================
    Funciones expuestas:
    - renderNegocios(): genera el HTML del módulo
-   - negSync(): carga motos + avances desde SharePoint
+   - negSync(): carga motos + avances desde BD_Tramites + Supabase
    - negSort(key): ordena por columna
    - negShowComment(code): placeholder para comentarios
 
    Estado: variables neg* en state.js
-   APIs: apiTramListar, apiAvanceConsultar (en api.js)
+   APIs: apiTramListar (Power Automate), apiAvanceConsultar (Supabase)
    ============================================================ */
 
 function renderNegocios() {
@@ -16,7 +16,7 @@ function renderNegocios() {
     return '<div class="eyebrow">VENTAS</div><h1 class="h1">Negocios activos</h1>' +
       '<div style="text-align:center;padding:60px 20px">' +
       '<div style="font-size:14px;font-weight:500;margin-bottom:6px">Cargando negocios...</div>' +
-      '<div style="font-size:11px;color:var(--tm)">Consultando BD Trámites y Lista de actividades</div>' +
+      '<div style="font-size:11px;color:var(--tm)">Consultando BD Trámites y Registro de actividades</div>' +
       '<div style="margin-top:20px"><div style="width:36px;height:36px;border:3px solid var(--bd);border-top-color:var(--gn);border-radius:50%;margin:0 auto;animation:spin 1s linear infinite"></div></div>' +
       '<style>@keyframes spin{to{transform:rotate(360deg)}}</style>' +
       '</div>';
@@ -31,7 +31,6 @@ function renderNegocios() {
       '</div>';
   }
 
-  // Construye filas con datos calculados
   var rows = negMotos.map(function(m) {
     var code = m.codigo_barras || m.codigoBarras || m.Title || '';
     var tipo = negNormTipo(m.tipo_motocicleta || m.tipo);
@@ -40,7 +39,6 @@ function renderNegocios() {
     var fecha = m.fecha_venta || m.FechaVenta || m.fechaVenta || '';
     var dias = negDiasDesde(fecha);
 
-    // Avances de esta moto
     var actividades = (negAvances || []).filter(function(r) {
       return (r.codigo_barras || r.Title || '') === code;
     });
@@ -48,7 +46,6 @@ function renderNegocios() {
       return (r.estado || '').toLowerCase() === 'ejecutada';
     });
 
-    // Solo cuenta las actividades principales (1, 2, 3...) NO las sub (.1)
     var nums = {};
     ejecutadas.forEach(function(r) {
       var n = String(r.actividad_num || '');
@@ -57,7 +54,6 @@ function renderNegocios() {
     var doneCount = Object.keys(nums).length;
     var pct = Math.round((doneCount / TOTAL_TRAM) * 100);
 
-    // Última actividad: la de mayor número
     var sorted = ejecutadas.slice().sort(function(a, b) {
       var na = parseFloat(a.actividad_num || '0');
       var nb = parseFloat(b.actividad_num || '0');
@@ -81,7 +77,6 @@ function renderNegocios() {
     };
   }).filter(function(r) { return r.code; });
 
-  // Filtros
   var filtered = rows.slice();
   if (negFilterTipo) filtered = filtered.filter(function(x) { return x.tipo === negFilterTipo; });
   if (negFilterMarca) filtered = filtered.filter(function(x) { return x.marca === negFilterMarca; });
@@ -92,12 +87,10 @@ function renderNegocios() {
     });
   }
 
-  // Conteos para los selects (sobre rows sin filtrar)
   var cNd = rows.filter(function(r) { return r.tipo === 'nd'; }).length;
   var cNs = rows.filter(function(r) { return r.tipo === 'ns'; }).length;
   var cUs = rows.filter(function(r) { return r.tipo === 'us'; }).length;
 
-  // Orden
   filtered.sort(function(a, b) {
     var va = a[negSortKey], vb = b[negSortKey];
     if (negSortKey === 'pct' || negSortKey === 'dias') {
@@ -110,11 +103,9 @@ function renderNegocios() {
     return 0;
   });
 
-  // Header
   var h = '<div class="eyebrow">VENTAS</div><h1 class="h1">Negocios activos</h1>' +
     '<div class="sub-title">Lista de motocicletas en proceso · clic en encabezados para ordenar</div>';
 
-  // Filtros
   h += '<div class="neg-filters">';
   h += '<div class="neg-filter-block"><span class="neg-select-label">Tipo de moto</span>' +
     '<select class="neg-select" onchange="negFilterTipo=this.value;render()">' +
@@ -133,14 +124,12 @@ function renderNegocios() {
   h += '<button class="btn btn-o" style="width:auto;padding:9px 16px;font-size:11px;height:38px;align-self:flex-end" onclick="negSync()">🔄 Actualizar</button>';
   h += '</div>';
 
-  // Tabla
   h += '<div class="neg-table">';
   h += '<div class="neg-table-bar">';
   h += '<div class="neg-table-count">' + filtered.length + ' NEGOCIO' + (filtered.length !== 1 ? 'S' : '') + ' EN CURSO</div>';
   h += '<input type="text" class="inp-sm" placeholder="Buscar código, moto, actividad..." value="' + negSearchTxt + '" oninput="negSearchTxt=this.value;render()" style="width:280px">';
   h += '</div>';
 
-  // Encabezados
   function th(key, label, right) {
     var active = negSortKey === key;
     var arrowUp = active && negSortDir === 'asc' ? ' on' : '';
@@ -198,7 +187,6 @@ function negSort(key) {
 }
 
 function negShowComment(code) {
-  // Por definir en futuras fases
   toast('Comentarios pendientes de implementar');
 }
 
@@ -207,15 +195,18 @@ function negSync() {
   negError = '';
   render();
 
+  // Check de BD_Tramites (sigue en Power Automate)
   if (!getUrl('tramLista')) {
     negLoading = false;
     negError = 'Falta URL de TRAM_Consulta_Lista en Configuración';
     render();
     return;
   }
-  if (!getUrl('tramAvance')) {
+
+  // Check de Supabase (nuevo)
+  if (!supabaseReady()) {
     negLoading = false;
-    negError = 'Falta URL de TRAM_Consulta_Avance en Configuración';
+    negError = 'Supabase no configurado (revisá SUPABASE_URL y SUPABASE_ANON_KEY en config.js)';
     render();
     return;
   }
