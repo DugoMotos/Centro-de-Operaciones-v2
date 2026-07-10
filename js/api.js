@@ -1,11 +1,16 @@
 /* ============================================================
-   API.JS — Capa de comunicación con Power Automate
+   API.JS — Capa de comunicación con Power Automate + Supabase
    ============================================================
-   Centraliza TODOS los fetch a flujos. Beneficios:
+   Centraliza TODOS los fetch. Beneficios:
    - Si cambia la forma de enviar requests, se cambia aquí
    - Manejo consistente de timeouts y errores
    - Fácil de mockear para tests futuros
-   - Ningún módulo llama fetch directamente, todos pasan por aquí
+   - Ningún módulo llama fetch directamente
+
+   Migración a Supabase:
+   - apiAvanceConsultar → Supabase GET registro_actividades
+   - apiAvanceEscribir  → Supabase POST registro_actividades
+   - Resto de funciones sigue apuntando a Power Automate
    ============================================================ */
 
 /* Timeout por defecto en milisegundos */
@@ -13,10 +18,7 @@ var API_TIMEOUT = 12000;
 var API_TIMEOUT_LONG = 20000;
 
 /* ============================================================
-   apiPost: helper genérico para llamadas POST
-   ============================================================
-   Retorna una Promise que se resuelve con el JSON de respuesta
-   o rechaza con error.
+   apiPost: helper genérico para llamadas POST a Power Automate
    ============================================================ */
 function apiPost(url, body, timeout) {
   if (!url) return Promise.reject(new Error('URL no configurada'));
@@ -34,15 +36,54 @@ function apiPost(url, body, timeout) {
 }
 
 /* ============================================================
-   APIs DE TRÁMITES
+   apiSupabase: helper para llamadas REST a Supabase
+   ============================================================
+   method: 'GET', 'POST', 'PATCH', 'DELETE'
+   path: '/rest/v1/registro_actividades?select=*'
+   body: objeto o array (para POST/PATCH)
+   ============================================================ */
+function apiSupabase(method, path, body, timeout) {
+  if (!supabaseReady()) {
+    return Promise.reject(new Error('Supabase no configurado en config.js'));
+  }
+  var ctrl = new AbortController();
+  var to = setTimeout(function() { ctrl.abort(); }, timeout || API_TIMEOUT);
+
+  var opts = {
+    method: method,
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    signal: ctrl.signal
+  };
+
+  if (body !== undefined && body !== null) {
+    opts.body = JSON.stringify(body);
+  }
+
+  return fetch(SUPABASE_URL + path, opts).then(function(r) {
+    clearTimeout(to);
+    if (!r.ok) {
+      return r.text().then(function(text) {
+        throw new Error('Supabase ' + r.status + ': ' + (text || r.statusText));
+      });
+    }
+    if (r.status === 204) return [];
+    return r.json();
+  });
+}
+
+/* ============================================================
+   APIs DE TRÁMITES (Power Automate → BD_Tramites Excel)
    ============================================================ */
 
-/* Consulta UNA moto por código de barras en BD_Tramites */
 function apiTramConsultarMoto(codigoBarras) {
   return apiPost(getUrl('tramC'), { codigoBarras: codigoBarras });
 }
 
-/* Escribe una fecha en una columna de BD_Tramites */
 function apiTramEscribirFecha(codigoBarras, columna, valor) {
   return apiPost(getUrl('tramW'), {
     codigoBarras: codigoBarras,
@@ -51,37 +92,75 @@ function apiTramEscribirFecha(codigoBarras, columna, valor) {
   });
 }
 
-/* ============================================================
-   APIs DE LISTA SHAREPOINT (Registro_Actividades)
-   ============================================================ */
-
-/* Consulta TODAS las actividades registradas en la lista */
-function apiAvanceConsultar() {
-  return apiPost(getUrl('tramAvance'), { codigo_barras: '*' }, API_TIMEOUT_LONG);
-}
-
-/* Escribe una actividad ejecutada en la lista SharePoint */
-function apiAvanceEscribir(payload) {
-  return apiPost(getUrl('tramEscrAct'), payload);
-}
-
-/* Consulta lista completa de motos en BD_Tramites */
 function apiTramListar() {
   return apiPost(getUrl('tramLista'), {}, API_TIMEOUT_LONG);
+}
+
+/* ============================================================
+   APIs DE REGISTRO DE ACTIVIDADES (Supabase - REEMPLAZA SharePoint)
+   ============================================================
+   Formato de respuesta compatible: devuelve { value: [...] }
+   ============================================================ */
+
+/* Consulta TODAS las actividades registradas */
+function apiAvanceConsultar() {
+  var path = '/rest/v1/' + SUPABASE_TABLES.registro +
+             '?select=id,codigo_barras,actividad_num,estado,fecha_registro,comentario' +
+             '&order=codigo_barras.asc,actividad_num.asc';
+  return apiSupabase('GET', path, null, API_TIMEOUT_LONG)
+    .then(function(rows) {
+      return { value: rows || [] };
+    });
+}
+
+/* Escribe una actividad ejecutada
+   payload esperado (formato legacy compatible):
+   { codigo_barras, actividad_num, actividad, dia, estado, responsable,
+     fecha_registro } */
+function apiAvanceEscribir(payload) {
+  var supabasePayload = {
+    codigo_barras: payload.codigo_barras || payload.Title || '',
+    actividad_num: parseInt(payload.actividad_num, 10)
+  };
+
+  if (payload.estado) supabasePayload.estado = payload.estado;
+  if (payload.fecha_registro) supabasePayload.fecha_registro = payload.fecha_registro;
+  if (payload.comentario) supabasePayload.comentario = payload.comentario;
+
+  var path = '/rest/v1/' + SUPABASE_TABLES.registro;
+  return apiSupabase('POST', path, supabasePayload)
+    .catch(function(err) {
+      // Duplicados bloqueados por UNIQUE constraint = OK silencioso
+      if (String(err.message).indexOf('duplicate key') >= 0 ||
+          String(err.message).indexOf('uq_registro_actividad') >= 0) {
+        console.warn('Registro duplicado bloqueado por BD:', supabasePayload);
+        return { alreadyExists: true };
+      }
+      throw err;
+    });
+}
+
+/* Consulta el catálogo de actividades manuales activas
+   Nuevo endpoint para futura carga dinámica del catálogo */
+function apiCatalogoConsultar() {
+  var path = '/rest/v1/' + SUPABASE_TABLES.catalogo +
+             '?select=actividad_num,nombre,responsable,tipo' +
+             '&activa=eq.true' +
+             '&tipo=eq.manual' +
+             '&order=actividad_num.asc';
+  return apiSupabase('GET', path);
 }
 
 /* ============================================================
    APIs DE PLAN DE ALISTAMIENTOS
    ============================================================ */
 
-/* Consulta plan completo o filtrado */
 function apiPlanConsultar(filter) {
   return apiPost(getUrl('planC'), {
     codigoBarras: filter || '*'
   }, 15000);
 }
 
-/* Escribe una nueva fila en BD_Plan */
 function apiPlanEscribir(payload) {
   return apiPost(getUrl('planW'), payload);
 }
@@ -90,7 +169,6 @@ function apiPlanEscribir(payload) {
    APIs DE SERVICIO TÉCNICO
    ============================================================ */
 
-/* Consulta plan por chasis */
 function apiAlistConsultar(chasis) {
   return apiPost(getUrl('alistC'), {
     chasis: chasis,
@@ -98,7 +176,6 @@ function apiAlistConsultar(chasis) {
   });
 }
 
-/* Actualiza estado de actividad de alistamiento */
 function apiAlistEscribir(payload) {
   return apiPost(getUrl('alistW'), payload);
 }
@@ -107,7 +184,6 @@ function apiAlistEscribir(payload) {
    APIs DE INVENTARIO
    ============================================================ */
 
-/* Escribe placa en BD_Inventario_Dugomotos */
 function apiInvEscribirPlaca(codigoBarras, placa) {
   return apiPost(getUrl('invEscrPlaca'), {
     codigo_barras: codigoBarras,
