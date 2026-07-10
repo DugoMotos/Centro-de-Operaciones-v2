@@ -1,13 +1,28 @@
 /* ============================================================
-   CONFIG.JS — Configuración de URLs de Power Automate
+   CONFIG.JS — Configuración de URLs y credenciales
    ============================================================
-   URLs por defecto de los flujos de Power Automate.
-   El usuario puede sobreescribirlas en Configuración del app.
+   URLs por defecto de los flujos de Power Automate + Supabase.
+   El usuario puede sobreescribir las URLs de Power Automate
+   en Configuración del app.
 
    IMPORTANTE: Estas URLs NO son secretas (van en código del
    navegador). Son seguras solo si Power Automate valida el
    origen o si los flujos solo escriben en columnas controladas.
+
+   Para Supabase, la seguridad la dan las RLS Policies definidas
+   en la propia BD. La anon key expuesta acá es esperada y no
+   representa un riesgo.
    ============================================================ */
+
+/* ────────────────────────────────────────────────────────────
+   SUPABASE — Registro de Actividades (reemplaza SharePoint)
+   ──────────────────────────────────────────────────────────── */
+var SUPABASE_URL = 'https://TU_PROYECTO.supabase.co';
+var SUPABASE_ANON_KEY = 'TU_ANON_KEY_AQUI';
+var SUPABASE_TABLES = {
+  catalogo: 'catalogo_actividades',
+  registro: 'registro_actividades'
+};
 
 /* URLs por defecto embebidas en el app */
 var DEFAULT_URLS = {
@@ -23,7 +38,8 @@ var DEFAULT_URLS = {
   // ----- Pestaña Plan -----
   planC: 'https://defaultcf4c3cc039c24ec1a7440591e622df.9d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/3d940aab92b649af9b8aac13adaca11b/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=MYl8E3vGLn7Q2OCuw-be3mb8ZyGI8_vgDDpW2-k1Eiw',
 
-  // ----- Lista SharePoint Registro_Actividades -----
+  // ----- Lista SharePoint Registro_Actividades (LEGACY - reemplazadas por Supabase) -----
+  // Se mantienen por si necesitás rollback rápido a la arquitectura anterior.
   tramAvance: 'https://defaultcf4c3cc039c24ec1a7440591e622df.9d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/c3c12da24d6f4c0e99f16052a4ba8aa4/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=nyBQQh9ZPVjC-XyPcSlngrfltqUi8JPYR_0uTn4RmLY',
   tramEscrAct: 'https://defaultcf4c3cc039c24ec1a7440591e622df.9d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/62544a55453949f4893dabe4321c2f83/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=6OHV4Yw6sJAJUeDhWCzBMTirYYGgZbOAMqE7ulN6lrY',
   tramLista: 'https://defaultcf4c3cc039c24ec1a7440591e622df.9d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/8bb7152418da49f684d2c78e54ee5d82/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=34OIs9vYrLwN0nHIsKFiEA_sh5FHTmmNiW5Ei3lXX7c',
@@ -50,4 +66,12 @@ var SK_PIN = 'dugo-admin-pin';
    luego cae a DEFAULT_URLS */
 function getUrl(key) {
   return urlOverrides[key] || DEFAULT_URLS[key] || '';
+}
+
+/* Helper para verificar si Supabase está configurado */
+function supabaseReady() {
+  return SUPABASE_URL &&
+         SUPABASE_URL.indexOf('TU_PROYECTO') < 0 &&
+         SUPABASE_ANON_KEY &&
+         SUPABASE_ANON_KEY.indexOf('TU_ANON_KEY') < 0;
 }
