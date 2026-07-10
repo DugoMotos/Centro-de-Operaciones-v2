@@ -17,7 +17,7 @@
 /* ────────────────────────────────────────────────────────────
    SUPABASE — Registro de Actividades (reemplaza SharePoint)
    ──────────────────────────────────────────────────────────── */
-var SUPABASE_URL = 'https://bfnkumsxvnpbbwyvfkjv.supabase.co/rest/v1/';
+var SUPABASE_URL = 'https://bfnkumsxvnpbbwyvfkjv.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmbmt1bXN4dm5wYmJ3eXZma2p2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NTAyMDEsImV4cCI6MjA5NjMyNjIwMX0.MOBCbgOHeQtSnPTooleg0r7B5XyBc_5XfHZlMc-i1zk';
 var SUPABASE_TABLES = {
   catalogo: 'catalogo_actividades',
