@@ -253,7 +253,7 @@ var ACTIVIDADES_TRAM = [
   { num: '24', orden: 240, titulo: 'Incluir SOAT en el paquete',             responsable: 'Trámites' },
   { num: '25', orden: 250, titulo: '[1] Informar cliente SOAT OK',           responsable: 'Trámites' },
   { num: '26', orden: 260, titulo: 'Verificar matrícula en RUNT',            responsable: 'Trámites' },
-  { num: '28', orden: 280, titulo: 'Activar garantía',                       responsable: 'Trámites' },
+  { num: '28', orden: 305, titulo: 'Activar garantía',                       responsable: 'Trámites' },
   { num: '29', orden: 290, titulo: 'Revisar avance de alistamientos',        responsable: 'Trámites' },
   { num: '30', orden: 300, titulo: 'Recibir matrícula y placa',              responsable: 'Trámites' },
   { num: '32', orden: 320, titulo: 'Programar instalación de placa',         responsable: 'Trámites' },
