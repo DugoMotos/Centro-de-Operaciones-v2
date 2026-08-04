@@ -151,6 +151,16 @@ function apiCatalogoConsultar() {
   return apiSupabase('GET', path);
 }
 
+/* Consulta los registros ejecutados de UNA moto específica
+   Útil para poblar el estado local al abrir una moto (bloqueo global) */
+function apiAvanceConsultarMoto(codigoBarras) {
+  var path = '/rest/v1/' + SUPABASE_TABLES.registro +
+             '?select=actividad_num,estado,fecha_registro' +
+             '&codigo_barras=eq.' + encodeURIComponent(codigoBarras) +
+             '&order=actividad_num.asc';
+  return apiSupabase('GET', path);
+}
+
 /* ============================================================
    APIs DE PLAN DE ALISTAMIENTOS
    ============================================================ */
