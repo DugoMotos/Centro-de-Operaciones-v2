@@ -186,7 +186,7 @@ var DAYS = [
       { c: 'tra', t: 'Informar asesores de crédito', d: 'Notificar a los asesores de crédito que la motocicleta está lista para entrega.', act: 'Comunicar a asesores → Moto lista para entrega', pre: 'Alistamientos verificados al 100%', tp: 'exec', actNum: 35 },
       { c: 'tra', t: 'Programar entrega', d: 'Coordinar la fecha y hora de entrega con los asesores de crédito.', act: 'Concertar con asesores/financieras → Programar fecha y hora', doc: 'Carpeta de listas para entrega', pre: 'Asesores de crédito informados', tp: 'exec', actNum: 36 },
       { c: 'tra', t: 'Informar cliente moto OK [3]', d: 'Tercer y último comunicado al cliente informando que su motocicleta está lista para entrega.', act: 'Usar plantilla comunicado [3] → Enviar al cliente', doc: 'Plantilla de comunicados al cliente', pre: 'Entrega programada con fecha y hora definidas', tp: 'com', actNum: 37 },
-      { c: 'log', t: 'Confirmar entrega', d: 'Ejecutar la entrega física de la motocicleta al cliente.', act: 'Preparar moto → Entregar documentos → Entrega al cliente', pre: 'Cliente informado y entrega programada por trámites', tp: 'exec' , actNum: 38},
+      { c: 'tra', t: 'Confirmar entrega', d: 'Ejecutar la entrega física de la motocicleta al cliente.', act: 'Preparar moto → Entregar documentos → Entrega al cliente', pre: 'Cliente informado y entrega programada por trámites', tp: 'exec', actNum: 38 },
       { c: 'tra', t: 'Registrar fecha de entrega', d: 'Registrar la fecha de entrega efectiva de la motocicleta.', act: 'FV Servicio técnico → Registrar fecha entrega', doc: 'FV Servicio técnico / Excel', pre: 'Motocicleta entregada al cliente', tp: 'reg' }
     ]
   },
