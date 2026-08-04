@@ -467,9 +467,43 @@ function pBuscar() {
     pAlistSel = [];
     pExpandStep = null;
     pFocusReg = null;
-    pLoading = false;
-    pActive = code;
-    render();
+
+    // NUEVO: consultar registros de Supabase para bloqueo global
+    if (typeof supabaseReady === 'function' && supabaseReady()) {
+      apiAvanceConsultarMoto(code)
+        .then(function(rows) {
+          // Marcar como ejecutadas las actividades que ya están en Supabase
+          // Reconstruir los checks locales usando actNum de DAYS
+          (rows || []).forEach(function(r) {
+            var actNum = r.actividad_num;
+            // Buscar el step en DAYS que tenga este actNum
+            DAYS.forEach(function(day) {
+              day.steps.forEach(function(s, si) {
+                if (s.actNum === actNum) {
+                  var key = day.day + '_' + si;
+                  if (!pMotos[code].checks[key]) {
+                    pMotos[code].checks[key] = r.fecha_registro || new Date().toISOString();
+                  }
+                }
+              });
+            });
+          });
+          sv(SK_P, pMotos);
+          pLoading = false;
+          pActive = code;
+          render();
+        })
+        .catch(function() {
+          // Si falla la consulta a Supabase, seguimos igual (sin bloqueo global)
+          pLoading = false;
+          pActive = code;
+          render();
+        });
+    } else {
+      pLoading = false;
+      pActive = code;
+      render();
+    }
   }).catch(function(e) {
     pLoading = false;
     pActive = null;
@@ -604,6 +638,44 @@ function pCheckStep(dayNum, stepIdx) {
   if (md.checks[key]) return;
   var day = DAYS.find(function(d) { return d.day === dayNum; });
   if (!day) return;
+  var step = day.steps[stepIdx];
+  if (!step) return;
+
+  // ── BLOQUEO GLOBAL: si el step tiene actNum, verificar que todas las
+  // actividades anteriores del catálogo (por orden) estén registradas ──
+  if (step.actNum && typeof ACTIVIDADES_TRAM !== 'undefined') {
+    var actActual = ACTIVIDADES_TRAM.find(function(a) { return a.num === String(step.actNum); });
+    if (actActual) {
+      var ordenActual = actActual.orden;
+
+      // Construir set de actNums ya ejecutados (según checks locales)
+      var ejecutados = {};
+      DAYS.forEach(function(d) {
+        d.steps.forEach(function(s, si) {
+          if (s.actNum && md.checks[d.day + '_' + si]) {
+            ejecutados[s.actNum] = true;
+          }
+        });
+      });
+
+      // Buscar la primera actividad anterior (por orden) NO ejecutada
+      var pendiente = null;
+      for (var i = 0; i < ACTIVIDADES_TRAM.length; i++) {
+        var a = ACTIVIDADES_TRAM[i];
+        if (a.orden < ordenActual && !ejecutados[parseInt(a.num, 10)]) {
+          pendiente = a;
+          break;
+        }
+      }
+
+      if (pendiente) {
+        toast('⚠️ Esperando #' + pendiente.num + ' "' + pendiente.titulo + '" (' + pendiente.responsable + ')', 1);
+        return;
+      }
+    }
+  }
+
+  // ── Bloqueo LOCAL (dentro del área del usuario, comportamiento previo) ──
   var areaSteps = pUserArea ? day.steps.filter(function(s) { return s.c === pUserArea; }) : day.steps;
   for (var i = 0; i < areaSteps.length; i++) {
     var oi = day.steps.indexOf(areaSteps[i]);
@@ -611,12 +683,12 @@ function pCheckStep(dayNum, stepIdx) {
     if (oi === stepIdx) break;
     if (!md.checks[pk]) { toast('Completa el paso anterior primero', 1); return; }
   }
+
   md.checks[key] = new Date().toISOString();
   sv(SK_P, pMotos);
   render();
 
   // Enviar a Supabase (registro_actividades)
-  var step = day.steps[stepIdx];
   var actNum = step.actNum || null;
   if (actNum && typeof supabaseReady === 'function' && supabaseReady()) {
     apiAvanceEscribir({
