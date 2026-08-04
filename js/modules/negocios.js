@@ -54,9 +54,11 @@ function renderNegocios() {
     var doneCount = Object.keys(nums).length;
     var pct = Math.round((doneCount / TOTAL_TRAM) * 100);
 
-    var sorted = ejecutadas.slice().sort(function(a, b) {
-      var na = parseFloat(a.actividad_num || '0');
-      var nb = parseFloat(b.actividad_num || '0');
+   var sorted = ejecutadas.slice().sort(function(a, b) {
+      var actA = ACTIVIDADES_TRAM.find(function(x) { return x.num === String(a.actividad_num); });
+      var actB = ACTIVIDADES_TRAM.find(function(x) { return x.num === String(b.actividad_num); });
+      var na = actA ? actA.orden : 0;
+      var nb = actB ? actB.orden : 0;
       return nb - na;
     });
     var ultima = sorted[0];
