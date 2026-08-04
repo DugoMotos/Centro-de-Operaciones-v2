@@ -247,7 +247,7 @@ var ACTIVIDADES_TRAM = [
   { num: '15', orden: 150, titulo: 'Revisar plan de marca en factura',       responsable: 'Trámites' },
   { num: '16', orden: 160, titulo: 'Solicitar SOAT',                         responsable: 'Trámites' },
   { num: '18', orden: 180, titulo: 'Organizar paquete para matricular',      responsable: 'Trámites' },
-  { num: '19', orden: 190, titulo: 'Entregar paquetes al tránsito',          responsable: 'Logística' },
+  { num: '19', orden: 190, titulo: 'Entregar paquetes al tránsito',          responsable: 'Trámites' },
   { num: '21', orden: 210, titulo: 'Verificar activación de SOAT',           responsable: 'Trámites' },
   { num: '23', orden: 230, titulo: 'Imprimir SOAT',                          responsable: 'Trámites' },
   { num: '24', orden: 240, titulo: 'Incluir SOAT en el paquete',             responsable: 'Trámites' },
