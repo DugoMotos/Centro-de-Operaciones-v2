@@ -105,7 +105,7 @@ function apiTramListar() {
 /* Consulta TODAS las actividades registradas */
 function apiAvanceConsultar() {
   var path = '/rest/v1/' + SUPABASE_TABLES.registro +
-             '?select=id,codigo_barras,actividad_num,estado,fecha_registro,comentario' +
+             '?select=id,codigo_barras,actividad_num,estado,fecha_registro,comentario,created_at' +
              '&order=codigo_barras.asc,actividad_num.asc';
   return apiSupabase('GET', path, null, API_TIMEOUT_LONG)
     .then(function(rows) {
