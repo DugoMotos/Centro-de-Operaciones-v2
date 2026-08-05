@@ -289,9 +289,7 @@ function pTrackView() {
 
         if (isChecked && !isExpanded) {
           h += '<div class="step-body" style="background:#F7FBF2;border:.5px solid #C0DD97;padding:8px 12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between" onclick="pExpandStep=\'' + stepExpandKey + '\';render()">';
-          h += '<div style="display:flex;align-items:center;gap:6px"><span class="step-tag" style="background:' + a.f + ';color:' + a.s + '">' + a.l + '</span><span style="font-size:13px;font-weight:600;color:var(--gnd)">' + step.t;
-          if (step.actNum) h += ' <span style="font-size:10px;color:var(--tm);font-weight:500">#' + step.actNum + '</span>';
-          h += '</span></div>';
+          h += '<div style="display:flex;align-items:center;gap:6px"><span class="step-tag" style="background:' + a.f + ';color:' + a.s + '">' + a.l + '</span><span style="font-size:13px;font-weight:600;color:var(--gnd)">' + step.t + '</span></div>';
           h += '<span style="font-size:10px;color:var(--gn)">✓</span>';
           h += '</div></div>';
         } else {
@@ -304,9 +302,7 @@ function pTrackView() {
           if (hasDateReg) h += '<span class="step-tag" style="background:var(--bll);color:var(--bld)">Consignar fecha</span>';
           h += '</div>';
 
-          h += '<div class="step-t">' + step.t;
-          if (step.actNum) h += ' <span style="font-size:10px;color:var(--tm);font-weight:500;margin-left:4px">#' + step.actNum + '</span>';
-          h += '</div>';
+          h += '<div class="step-t">' + step.t + '</div>';
           if (step.d) h += '<div style="font-size:11px;color:var(--tm);margin-top:4px;line-height:1.5">' + step.d + '</div>';
           if (step.pre) h += '<div style="margin-top:6px;padding:6px 10px;background:var(--yll);border-left:3px solid var(--yl)"><div style="font-size:9px;font-weight:700;color:var(--yld);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Prerrequisito</div><div style="font-size:10px;color:var(--yld);line-height:1.4">' + step.pre + '</div></div>';
           if (step.act) h += '<div style="margin-top:6px;padding:6px 10px;background:var(--sf);border-radius:6px"><div style="font-size:9px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Acción</div><div style="font-size:10px;color:var(--tx);line-height:1.4">' + step.act + '</div></div>';
@@ -669,7 +665,7 @@ function pCheckStep(dayNum, stepIdx) {
       }
 
       if (pendiente) {
-        toast('⚠️ Esperando #' + pendiente.num + ' "' + pendiente.titulo + '" (' + pendiente.responsable + ')', 1);
+        toast('⚠️ Esperando "' + pendiente.titulo + '" (' + pendiente.responsable + ')', 1);
         return;
       }
     }
