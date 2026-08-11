@@ -11,8 +11,11 @@
      al final de cada tarjeta como referencia de última ejecución
    ============================================================ */
 
+/* Estado local del módulo */
+var planError = '';
+
 /* Helper: fecha corta dd/mm/aaaa */
-function plFmtFecha(iso) {
+function planFmtFecha(iso) {
   if (!iso) return '—';
   try {
     var d = new Date(iso);
@@ -28,7 +31,7 @@ function plFmtFecha(iso) {
 }
 
 /* Helper: fecha + hora dd/mm/aaaa hh:mm */
-function plFmtFechaHora(iso) {
+function planFmtFechaHora(iso) {
   if (!iso) return '';
   try {
     var d = new Date(iso);
@@ -50,7 +53,7 @@ function plFmtFechaHora(iso) {
 function renderPlan() {
   var pHeader = '<div class="eyebrow">ALISTAMIENTOS</div><h1 class="h1">Plan de alistamientos</h1>';
 
-  if (plLoading) {
+  if (planLoading) {
     return pHeader +
       '<div style="text-align:center;padding:50px 20px">' +
       '<div style="font-size:32px;margin-bottom:12px">🔍</div>' +
@@ -60,27 +63,27 @@ function renderPlan() {
       '</div>';
   }
 
-  if (!plList) {
+  if (!planData) {
     return pHeader +
       '<div class="sub-title">Motocicletas con actividades de alistamiento pendientes</div>' +
       '<div style="text-align:center;padding:40px 20px">' +
-      '<button class="btn btn-p" style="max-width:260px;margin:0 auto" onclick="plSync()">Cargar plan</button>' +
-      (plError ? '<div style="margin-top:14px;padding:10px 14px;background:var(--rdl);border-radius:8px;border:0.5px solid var(--rd);color:var(--rdd);font-size:11px;max-width:340px;margin-left:auto;margin-right:auto">' + plError + '</div>' : '') +
+      '<button class="btn btn-p" style="max-width:260px;margin:0 auto" onclick="planSync()">Cargar plan</button>' +
+      (planError ? '<div style="margin-top:14px;padding:10px 14px;background:var(--rdl);border-radius:8px;border:0.5px solid var(--rd);color:var(--rdd);font-size:11px;max-width:340px;margin-left:auto;margin-right:auto">' + planError + '</div>' : '') +
       '</div>';
   }
 
   var h = pHeader;
-  h += '<div class="sub-title">' + plList.length + ' motocicleta' + (plList.length !== 1 ? 's' : '') + ' con actividades pendientes</div>';
+  h += '<div class="sub-title">' + planData.length + ' motocicleta' + (planData.length !== 1 ? 's' : '') + ' con actividades pendientes</div>';
   h += '<div style="margin-bottom:14px;display:flex;gap:8px">';
-  h += '<button class="btn btn-o" style="width:auto;padding:8px 14px;font-size:12px" onclick="plSync()">🔄 Actualizar</button>';
+  h += '<button class="btn btn-o" style="width:auto;padding:8px 14px;font-size:12px" onclick="planSync()">🔄 Actualizar</button>';
   h += '</div>';
 
-  if (!plList.length) {
+  if (!planData.length) {
     h += '<div style="text-align:center;padding:40px 20px;color:var(--tm)">No hay motocicletas con actividades pendientes</div>';
     return h;
   }
 
-  plList.forEach(function(m) {
+  planData.forEach(function(m) {
     var code = m.codigoBarras || m.codigo_barras || m.Title || '—';
     var acts = m.actividades || [];
     var pendientes = acts.filter(function(a) { return !a.ejecutada && !a.fecha_ejecucion; });
@@ -90,19 +93,18 @@ function renderPlan() {
 
     // Fecha solicitado (formato dd/mm/aaaa)
     var fs = m.fechaSol || m.fecha || m.Modified || '';
-    var fsFmt = plFmtFecha(fs);
+    var fsFmt = planFmtFecha(fs);
 
-    // Última modificación (para mostrar como hora de ejecución)
+    // Última modificación
     var mod = m.Modified || m.modified || m.updated_at || '';
-    var modFmt = plFmtFechaHora(mod);
+    var modFmt = planFmtFechaHora(mod);
 
-    // Chequeo needN (por retrocompatibilidad, mantengo el aviso visual pero sin "Pendiente")
+    // Chequeo needN
     var needN = acts.some(function(a) {
       return (a.actividad || '').toLowerCase().indexOf('nueva') >= 0;
     });
 
     h += '<div class="p-card" style="margin-bottom:12px">';
-    // Título: solo el código (sin "Pendiente")
     h += '<div class="p-title">';
     h += '<span style="font-family:var(--fm);letter-spacing:.3px">' + code + '</span>';
     if (needN) h += ' <span style="font-size:9px;font-weight:700;color:var(--yld);background:var(--yll);padding:2px 6px;border-radius:5px;margin-left:6px">NUEVA</span>';
@@ -110,27 +112,24 @@ function renderPlan() {
 
     h += '<div class="p-meta">Solicitado: ' + fsFmt + '</div>';
 
-    // Barra de progreso mini
     h += '<div style="margin-top:8px;height:4px;background:var(--sf);border-radius:2px;overflow:hidden">';
     h += '<div style="height:100%;width:' + pctActs + '%;background:' + (pctActs === 100 ? 'var(--gn)' : 'var(--or)') + '"></div>';
     h += '</div>';
     h += '<div style="font-size:10px;color:var(--tm);margin-top:4px">' + doneActs + '/' + totalActs + ' actividades (' + pctActs + '%)</div>';
 
-    // Listado de actividades pendientes
     if (pendientes.length) {
       h += '<div style="margin-top:10px;padding-top:10px;border-top:.5px solid var(--bd)">';
-      pendientes.forEach(function(a, idx) {
-        h += '<div class="p-act-row">';
+      pendientes.forEach(function(a) {
+        h += '<div class="p-act-row" style="display:flex;align-items:center;gap:8px;padding:6px 0">';
         h += '<div style="flex:1"><span style="font-size:12px;font-weight:600">' + (a.actividad || 'Sin nombre') + '</span>';
         if (a.responsable) h += '<div style="font-size:10px;color:var(--tm);margin-top:2px">' + a.responsable + '</div>';
         h += '</div>';
-        h += '<button class="btn btn-o" style="width:auto;padding:5px 10px;font-size:11px" onclick="plExec(\'' + a.id + '\')">Marcar OK</button>';
+        h += '<button class="btn btn-o" style="width:auto;padding:5px 10px;font-size:11px" onclick="planExec(\'' + a.id + '\')">Marcar OK</button>';
         h += '</div>';
       });
       h += '</div>';
     }
 
-    // Hora de última ejecución al final de la tarjeta
     if (modFmt) {
       h += '<div style="margin-top:10px;padding-top:8px;border-top:.5px dashed var(--bd);font-size:10px;color:var(--tm);text-align:right">';
       h += 'Última actualización: <span style="font-family:var(--fm);color:var(--tx);font-weight:600">' + modFmt + '</span>';
@@ -143,24 +142,23 @@ function renderPlan() {
   return h;
 }
 
-function plSync() {
-  plLoading = true;
-  plError = '';
+function planSync() {
+  planLoading = true;
+  planError = '';
   render();
 
   if (!getUrl('planC')) {
-    plLoading = false;
-    plError = 'Falta URL de Plan en Configuración';
+    planLoading = false;
+    planError = 'Falta URL de Plan en Configuración';
     render();
     return;
   }
 
   apiPlanConsultar()
     .then(function(data) {
-      plLoading = false;
+      planLoading = false;
       var rows = data.value || data || [];
       if (!Array.isArray(rows)) rows = [];
-      // Agrupar por moto
       var grouped = {};
       rows.forEach(function(r) {
         var code = r.codigoBarras || r.codigo_barras || r.Title || '';
@@ -173,7 +171,6 @@ function plSync() {
             actividades: []
           };
         }
-        // Actualizar Modified si este registro es más reciente
         if (r.Modified && (!grouped[code].Modified || r.Modified > grouped[code].Modified)) {
           grouped[code].Modified = r.Modified;
         }
@@ -185,25 +182,25 @@ function plSync() {
           fecha_ejecucion: r.fecha_ejecucion || null
         });
       });
-      plList = Object.values(grouped);
-      toast('✓ ' + plList.length + ' motocicletas cargadas');
+      planData = Object.values(grouped);
+      toast('✓ ' + planData.length + ' motocicletas cargadas');
       render();
     })
     .catch(function(e) {
-      plLoading = false;
-      plError = e.name === 'AbortError' ? 'Tiempo agotado al consultar' : 'Error: ' + e.message;
+      planLoading = false;
+      planError = e.name === 'AbortError' ? 'Tiempo agotado al consultar' : 'Error: ' + e.message;
       toast('Error al cargar plan', 1);
       render();
     });
 }
 
-function plExec(id) {
+function planExec(id) {
   if (!id) return;
   var fecha = new Date().toISOString();
   apiPlanEscribir({ id: id, action: 'exec', fecha: fecha })
     .then(function() {
       toast('✓ Actividad marcada');
-      plSync();
+      planSync();
     })
     .catch(function(e) {
       toast('Error al marcar: ' + e.message, 1);
