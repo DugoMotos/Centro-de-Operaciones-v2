@@ -180,7 +180,7 @@ function renderPlan() {
     // Encontrar Modified más reciente entre ejecutadas
     var maxIso = null;
     ejec.forEach(function(r) {
-      var t = r.Modified || r.modified || r.fecha_ejecucion || null;
+  var t = r.fecha_ejecucion || r.fechaEjec || null;
       if (t && (!maxIso || t > maxIso)) maxIso = t;
     });
     var ultActFecha = planFmtFecha(maxIso);
@@ -241,7 +241,7 @@ function renderPlan() {
         var estBg = isEjec ? 'var(--gnl)' : 'var(--yll)';
         var estColor = isEjec ? 'var(--gnd)' : 'var(--yld)';
         var estText = isEjec ? '✓ Ejecutada' : '⏳ Pendiente';
-        var actModified = r.Modified || r.modified || '';
+        var actModified = r.fecha_ejecucion || r.fechaEjec || '';
         var actHora = isEjec ? planFmtHora(actModified) : '';
         var actFechaEjec = isEjec ? planFmtFecha(actModified) : '';
 
