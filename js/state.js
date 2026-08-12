@@ -50,6 +50,7 @@ var negLoading = false;
 var negError = '';
 var negSortKey = 'code';
 var negSortDir = 'asc';
+var negFilterArea = '';
 var negFilterTipo = '';
 var negFilterMarca = '';
 var negSearchTxt = '';
