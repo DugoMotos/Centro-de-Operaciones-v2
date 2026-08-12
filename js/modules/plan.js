@@ -1,208 +1,130 @@
 /* ============================================================
-   PLAN.JS — Módulo Plan de Alistamientos
+   PLAN.JS — Módulo Plan de alistamientos
    ============================================================
-   Muestra las motos con actividades de alistamiento pendientes.
-   Permite marcarlas como ejecutadas.
+   Funciones expuestas:
+   - renderPlan(): genera el HTML del módulo
+   - planSync(): carga datos desde SharePoint BD_Plan
 
-   Cambios jul 2026:
-   - Eliminado texto redundante "Pendiente" del título de la tarjeta
-   - Fecha "Solicitado" formateada como dd/mm/aaaa
-   - Agregada hora de última modificación (Modified de SharePoint)
-     al final de cada tarjeta como referencia de última ejecución
+   Estado: variables plan* en state.js
+   APIs: apiPlanConsultar
    ============================================================ */
 
-/* Estado local del módulo */
-var planError = '';
-
-/* Helper: fecha corta dd/mm/aaaa */
-function planFmtFecha(iso) {
-  if (!iso) return '—';
-  try {
-    var d = new Date(iso);
-    if (isNaN(d.getTime())) return String(iso);
-    var opts = { timeZone: 'America/Bogota', day: '2-digit', month: '2-digit', year: 'numeric' };
-    var partes = new Intl.DateTimeFormat('es-CO', opts).formatToParts(d);
-    var map = {};
-    partes.forEach(function(p) { map[p.type] = p.value; });
-    return map.day + '/' + map.month + '/' + map.year;
-  } catch (e) {
-    return String(iso);
-  }
-}
-
-/* Helper: fecha + hora dd/mm/aaaa hh:mm */
-function planFmtFechaHora(iso) {
-  if (!iso) return '';
-  try {
-    var d = new Date(iso);
-    if (isNaN(d.getTime())) return '';
-    var opts = {
-      timeZone: 'America/Bogota',
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit', hour12: false
-    };
-    var partes = new Intl.DateTimeFormat('es-CO', opts).formatToParts(d);
-    var map = {};
-    partes.forEach(function(p) { map[p.type] = p.value; });
-    return map.day + '/' + map.month + '/' + map.year + ' ' + map.hour + ':' + map.minute;
-  } catch (e) {
-    return '';
-  }
-}
-
 function renderPlan() {
-  var pHeader = '<div class="eyebrow">ALISTAMIENTOS</div><h1 class="h1">Plan de alistamientos</h1>';
+  var h = '<div class="eyebrow">PROCEDIMIENTO / PLAN</div><h1 class="h1">Plan de alistamientos</h1>' +
+    '<div class="sub-title">Vista de la tabla BD_Plan desde SharePoint</div>';
 
-  if (planLoading) {
-    return pHeader +
-      '<div style="text-align:center;padding:50px 20px">' +
-      '<div style="font-size:32px;margin-bottom:12px">🔍</div>' +
-      '<div style="font-size:15px;font-weight:700;margin-bottom:6px">Consultando plan...</div>' +
-      '<div style="margin-top:16px"><div style="width:40px;height:40px;border:3px solid var(--bd);border-top-color:var(--gn);border-radius:50%;margin:0 auto;animation:spin 1s linear infinite"></div></div>' +
-      '<style>@keyframes spin{to{transform:rotate(360deg)}}</style>' +
-      '</div>';
-  }
-
-  if (!planData) {
-    return pHeader +
-      '<div class="sub-title">Motocicletas con actividades de alistamiento pendientes</div>' +
-      '<div style="text-align:center;padding:40px 20px">' +
-      '<button class="btn btn-p" style="max-width:260px;margin:0 auto" onclick="planSync()">Cargar plan</button>' +
-      (planError ? '<div style="margin-top:14px;padding:10px 14px;background:var(--rdl);border-radius:8px;border:0.5px solid var(--rd);color:var(--rdd);font-size:11px;max-width:340px;margin-left:auto;margin-right:auto">' + planError + '</div>' : '') +
-      '</div>';
-  }
-
-  var h = pHeader;
-  h += '<div class="sub-title">' + planData.length + ' motocicleta' + (planData.length !== 1 ? 's' : '') + ' con actividades pendientes</div>';
-  h += '<div style="margin-bottom:14px;display:flex;gap:8px">';
-  h += '<button class="btn btn-o" style="width:auto;padding:8px 14px;font-size:12px" onclick="planSync()">🔄 Actualizar</button>';
-  h += '</div>';
-
-  if (!planData.length) {
-    h += '<div style="text-align:center;padding:40px 20px;color:var(--tm)">No hay motocicletas con actividades pendientes</div>';
+  if (!pCfg.planC) {
+    h += '<div style="text-align:center;padding:30px;color:var(--tm)">' +
+      '<div style="font-size:28px;margin-bottom:8px">⚠️</div>' +
+      '<div style="font-size:12px">URL de consulta no configurada.<br>Ingresá a Configuración para agregar la URL de BD Plan de alistamientos.</div></div>';
     return h;
   }
 
-  planData.forEach(function(m) {
-    var code = m.codigoBarras || m.codigo_barras || m.Title || '—';
-    var acts = m.actividades || [];
-    var pendientes = acts.filter(function(a) { return !a.ejecutada && !a.fecha_ejecucion; });
-    var totalActs = acts.length;
-    var doneActs = totalActs - pendientes.length;
-    var pctActs = totalActs ? Math.round((doneActs / totalActs) * 100) : 0;
+  h += '<div class="flex" style="margin-bottom:10px"><button class="btn btn-p" style="width:auto;padding:9px 16px;font-size:12px" onclick="planSync()">🔄 Actualizar datos</button></div>';
 
-    // Fecha solicitado (formato dd/mm/aaaa)
-    var fs = m.fechaSol || m.fecha || m.Modified || '';
-    var fsFmt = planFmtFecha(fs);
+  if (planLoading) {
+    h += '<div style="text-align:center;padding:30px"><div style="width:30px;height:30px;border:3px solid var(--bd);border-top-color:var(--gn);border-radius:50%;margin:0 auto;animation:spin 1s linear infinite"></div><div style="font-size:11px;color:var(--tm);margin-top:8px">Cargando datos...</div></div>';
+    return h;
+  }
 
-    // Última modificación
-    var mod = m.Modified || m.modified || m.updated_at || '';
-    var modFmt = planFmtFechaHora(mod);
+  if (!planData || !planData.length) {
+    h += '<div style="text-align:center;padding:30px;color:var(--tm);font-size:12px">Sin datos. Presiona "Actualizar datos" para cargar.</div>';
+    return h;
+  }
 
-    // Chequeo needN
-    var needN = acts.some(function(a) {
-      return (a.actividad || '').toLowerCase().indexOf('nueva') >= 0;
-    });
+  // Filters
+  h += '<div class="lbl">Filtros</div>';
+  h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">';
+  h += '<input class="inp inp-sm" id="planFilterInp" placeholder="Código (sin DM)..." value="' + planFilter + '" oninput="planFilter=this.value" onchange="render()" onkeydown="if(event.key===\'Enter\'){planFilter=this.value;render()}">';
+  h += '<input type="date" class="inp inp-sm" value="' + planFilterFecha + '" onchange="planFilterFecha=this.value;render()">';
+  h += '</div>';
+  h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">';
+  h += '<select class="inp inp-sm" value="' + planFilterProc + '" onchange="planFilterProc=this.value;render()">' +
+    '<option value=""' + (planFilterProc === '' ? ' selected' : '') + '>Todos los procesos</option>' +
+    '<option value="Alistamiento"' + (planFilterProc === 'Alistamiento' ? ' selected' : '') + '>Alistamiento</option>' +
+    '<option value="Marcación"' + (planFilterProc === 'Marcación' ? ' selected' : '') + '>Marcación</option>' +
+    '<option value="Defensas"' + (planFilterProc === 'Defensas' ? ' selected' : '') + '>Defensas</option>' +
+    '<option value="GPS"' + (planFilterProc === 'GPS' ? ' selected' : '') + '>GPS</option>' +
+    '<option value="Placa"' + (planFilterProc === 'Placa' ? ' selected' : '') + '>Placa</option>' +
+    '</select>';
+  h += '<select class="inp inp-sm" value="' + planFilterEstado + '" onchange="planFilterEstado=this.value;render()">' +
+    '<option value=""' + (planFilterEstado === '' ? ' selected' : '') + '>Todos los estados</option>' +
+    '<option value="Pendiente"' + (planFilterEstado === 'Pendiente' ? ' selected' : '') + '>Pendiente</option>' +
+    '<option value="Ejecutada"' + (planFilterEstado === 'Ejecutada' ? ' selected' : '') + '>Ejecutada</option>' +
+    '</select>';
+  h += '</div>';
+  h += '<div style="margin-bottom:10px"><button style="font-size:10px;color:var(--bl);background:none;border:none;cursor:pointer;text-decoration:underline" onclick="planFilter=\'\';planFilterProc=\'\';planFilterEstado=\'\';planFilterFecha=\'\';render()">Limpiar filtros</button></div>';
 
-    h += '<div class="p-card" style="margin-bottom:12px">';
-    h += '<div class="p-title">';
-    h += '<span style="font-family:var(--fm);letter-spacing:.3px">' + code + '</span>';
-    if (needN) h += ' <span style="font-size:9px;font-weight:700;color:var(--yld);background:var(--yll);padding:2px 6px;border-radius:5px;margin-left:6px">NUEVA</span>';
-    h += '</div>';
-
-    h += '<div class="p-meta">Solicitado: ' + fsFmt + '</div>';
-
-    h += '<div style="margin-top:8px;height:4px;background:var(--sf);border-radius:2px;overflow:hidden">';
-    h += '<div style="height:100%;width:' + pctActs + '%;background:' + (pctActs === 100 ? 'var(--gn)' : 'var(--or)') + '"></div>';
-    h += '</div>';
-    h += '<div style="font-size:10px;color:var(--tm);margin-top:4px">' + doneActs + '/' + totalActs + ' actividades (' + pctActs + '%)</div>';
-
-    if (pendientes.length) {
-      h += '<div style="margin-top:10px;padding-top:10px;border-top:.5px solid var(--bd)">';
-      pendientes.forEach(function(a) {
-        h += '<div class="p-act-row" style="display:flex;align-items:center;gap:8px;padding:6px 0">';
-        h += '<div style="flex:1"><span style="font-size:12px;font-weight:600">' + (a.actividad || 'Sin nombre') + '</span>';
-        if (a.responsable) h += '<div style="font-size:10px;color:var(--tm);margin-top:2px">' + a.responsable + '</div>';
-        h += '</div>';
-        h += '<button class="btn btn-o" style="width:auto;padding:5px 10px;font-size:11px" onclick="planExec(\'' + a.id + '\')">Marcar OK</button>';
-        h += '</div>';
-      });
-      h += '</div>';
+  var filtered = planData.slice();
+  if (planFilter) filtered = filtered.filter(function(r) { return (r.codigo_barras || '').toUpperCase().indexOf(planFilter.toUpperCase()) >= 0; });
+  if (planFilterFecha) filtered = filtered.filter(function(r) {
+    var f = r.fecha || '';
+    if (f.indexOf('/') >= 0) {
+      var p = f.split('/');
+      f = p[2] + '-' + p[1] + '-' + p[0];
     }
-
-    if (modFmt) {
-      h += '<div style="margin-top:10px;padding-top:8px;border-top:.5px dashed var(--bd);font-size:10px;color:var(--tm);text-align:right">';
-      h += 'Última actualización: <span style="font-family:var(--fm);color:var(--tx);font-weight:600">' + modFmt + '</span>';
-      h += '</div>';
-    }
-
-    h += '</div>';
+    return f.indexOf(planFilterFecha) >= 0;
   });
+  if (planFilterProc) filtered = filtered.filter(function(r) { return (r.proceso || '') === planFilterProc; });
+  if (planFilterEstado === 'Pendiente') filtered = filtered.filter(function(r) {
+    var e = (r.estado || '').toLowerCase();
+    return !e || e === 'pendiente';
+  });
+  else if (planFilterEstado === 'Ejecutada') filtered = filtered.filter(function(r) {
+    var e = (r.estado || '').toLowerCase();
+    return e === 'ejecutada' || e === 'ejecutado';
+  });
+
+  h += '<div style="font-family:var(--fm);font-size:10px;color:var(--tm);margin-bottom:8px">' + filtered.length + ' de ' + planData.length + ' registros</div>';
+
+  // Table cards
+  filtered.slice(0, 50).forEach(function(r) {
+    var est = (r.estado || '').toLowerCase();
+    var isEjec = est === 'ejecutada' || est === 'ejecutado';
+    var estBg = isEjec ? 'var(--gnl)' : 'var(--yll)';
+    var estColor = isEjec ? 'var(--gnd)' : 'var(--yld)';
+    var estText = isEjec ? 'Ejecutada' : 'Pendiente';
+    var procColor = { 'Alistamiento': '#34D399', 'Marcación': '#60A5FA', 'Defensas': '#FB923C', 'GPS': '#22D3EE' };
+
+    h += '<div style="padding:10px 12px;border-radius:8px;background:var(--sf);border:.5px solid var(--bd);margin-bottom:4px">';
+    h += '<div class="flex fxc fxb">';
+    h += '<div style="flex:1">';
+    h += '<div class="flex fxc" style="gap:6px;margin-bottom:3px">';
+    h += '<span style="font-family:var(--fm);font-size:13px;font-weight:700">' + (r.codigo_barras || '') + '</span>';
+    h += '<span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px;background:' + estBg + ';color:' + estColor + '">' + estText + '</span>';
+    h += '</div>';
+    h += '<div class="flex fxc" style="gap:6px">';
+    h += '<div style="width:8px;height:8px;border-radius:50%;background:' + (procColor[r.proceso] || 'var(--tm)') + '"></div>';
+    h += '<span style="font-size:11px;font-weight:600">' + (r.proceso || '') + '</span>';
+    if (r.marca) h += '<span style="font-size:9px;color:var(--tm)">' + (r.marca || '') + ' ' + (r.linea || '') + '</span>';
+    h += '</div>';
+    if (r.responsable || r.ejecuto) h += '<div style="font-size:9px;color:var(--tm);margin-top:2px">' + (r.ejecuto ? 'Ejecutó: ' + r.ejecuto : 'Resp: ' + r.responsable) + '</div>';
+    h += '</div>';
+    h += '<div style="text-align:right;flex-shrink:0">';
+    if (r.fecha) h += '<div style="font-size:9px;color:var(--tm)">' + (r.fecha || '') + '</div>';
+    if (r.placa) h += '<div style="font-size:9px;font-family:var(--fm);color:var(--tx);margin-top:2px">' + (r.placa || '') + '</div>';
+    h += '</div></div></div>';
+  });
+
+  if (filtered.length > 50) h += '<div style="text-align:center;padding:10px;font-size:11px;color:var(--tm)">Mostrando 50 de ' + filtered.length + '. Usá los filtros para reducir.</div>';
 
   return h;
 }
 
 function planSync() {
+  if (!pCfg.planC) { toast('URL de consulta no configurada', 1); return; }
   planLoading = true;
-  planError = '';
   render();
 
-  if (!getUrl('planC')) {
+  apiPlanConsultar('*').then(function(data) {
+    planData = data.value || data;
+    if (!Array.isArray(planData)) planData = [];
     planLoading = false;
-    planError = 'Falta URL de Plan en Configuración';
+    toast('✓ ' + planData.length + ' registros cargados');
     render();
-    return;
-  }
-
-  apiPlanConsultar()
-    .then(function(data) {
-      planLoading = false;
-      var rows = data.value || data || [];
-      if (!Array.isArray(rows)) rows = [];
-      var grouped = {};
-      rows.forEach(function(r) {
-        var code = r.codigoBarras || r.codigo_barras || r.Title || '';
-        if (!code) return;
-        if (!grouped[code]) {
-          grouped[code] = {
-            codigoBarras: code,
-            fechaSol: r.fechaSol || r.fecha || r.Modified || '',
-            Modified: r.Modified || r.modified || '',
-            actividades: []
-          };
-        }
-        if (r.Modified && (!grouped[code].Modified || r.Modified > grouped[code].Modified)) {
-          grouped[code].Modified = r.Modified;
-        }
-        grouped[code].actividades.push({
-          id: r.id || r.ID || '',
-          actividad: r.actividad || r.proceso || '',
-          responsable: r.responsable || '',
-          ejecutada: !!r.ejecutada,
-          fecha_ejecucion: r.fecha_ejecucion || null
-        });
-      });
-      planData = Object.values(grouped);
-      toast('✓ ' + planData.length + ' motocicletas cargadas');
-      render();
-    })
-    .catch(function(e) {
-      planLoading = false;
-      planError = e.name === 'AbortError' ? 'Tiempo agotado al consultar' : 'Error: ' + e.message;
-      toast('Error al cargar plan', 1);
-      render();
-    });
-}
-
-function planExec(id) {
-  if (!id) return;
-  var fecha = new Date().toISOString();
-  apiPlanEscribir({ id: id, action: 'exec', fecha: fecha })
-    .then(function() {
-      toast('✓ Actividad marcada');
-      planSync();
-    })
-    .catch(function(e) {
-      toast('Error al marcar: ' + e.message, 1);
-    });
+  }).catch(function() {
+    planLoading = false;
+    toast('Error al cargar datos', 1);
+    render();
+  });
 }
