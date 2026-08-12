@@ -135,7 +135,7 @@ function renderNegocios() {
     var linea = m.linea || m.LINEA || m.Linea || '';
     var referencia = m.referencia || m.REFERENCIA || m.Referencia || '';
     var motoRef = (linea + ' ' + referencia).trim() || '—';
-var clienteRaw = m.cliente || m.CLIENTE || m.Cliente || '';
+   var clienteRaw = m.cliente || m.CLIENTE || m.Cliente || '';
 var cliente = clienteRaw ? clienteRaw.toLowerCase().split(' ').map(function(w) {
   return w.charAt(0).toUpperCase() + w.slice(1);
 }).join(' ') : '—';
