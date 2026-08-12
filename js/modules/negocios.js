@@ -221,7 +221,10 @@ var asesor = asesorRaw ? asesorRaw.toLowerCase().split(' ').map(function(w) {
   h += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">';
   h += '<div style="flex:1;min-width:220px;position:relative">';
   h += '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--tm);font-size:13px">🔍</span>';
-  h += '<input type="text" class="inp" id="negSearchInput" placeholder="Buscar código, cliente, asesor, actividad..." value="' + negSearchTxt + '" oninput="negSearchTxt=this.value;render();setTimeout(function(){var el=document.getElementById(\'negSearchInput\');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},0)" style="padding-left:32px;font-size:12px;height:34px">';
+  h += '<input type="text" class="inp" id="negSearchInput" placeholder="Buscar código, cliente, asesor, actividad..." value="' + negSearchTxt + '" oninput="negSearchTxt=this.value;render();setTimeout(function(){var el=document.getElementById(\'negSearchInput\');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},0)" style="padding-left:32px;padding-right:32px;font-size:12px;height:34px">';
+  if (negSearchTxt) {
+    h += '<span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--tm);font-size:16px;cursor:pointer;line-height:1" onclick="negSearchTxt=\'\';render()" title="Limpiar búsqueda">×</span>';
+  }
   h += '</div>';
 
   h += '<select class="neg-select" style="height:34px;min-width:130px" onchange="negFilterArea=this.value;render()">' +
