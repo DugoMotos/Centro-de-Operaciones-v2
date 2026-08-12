@@ -161,6 +161,15 @@ function apiAvanceConsultarMoto(codigoBarras) {
   return apiSupabase('GET', path);
 }
 
+/* Consulta lista de asesores activos desde Supabase */
+function apiAsesoresConsultar() {
+  var path = '/rest/v1/asesores' +
+             '?select=id,nombre_completo,area,activo' +
+             '&activo=eq.true' +
+             '&order=nombre_completo.asc';
+  return apiSupabase('GET', path);
+}
+
 /* ============================================================
    APIs DE PLAN DE ALISTAMIENTOS
    ============================================================ */
