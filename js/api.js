@@ -92,6 +92,13 @@ function apiTramEscribirFecha(codigoBarras, columna, valor) {
   });
 }
 
+function apiContEscribirFecha(codigo_barras, fecha) {
+  return apiPost(getUrl('contW'), {
+    codigo_barras: codigo_barras,
+    fecha: fecha
+  });
+}
+
 function apiTramListar() {
   return apiPost(getUrl('tramLista'), {}, API_TIMEOUT_LONG);
 }
