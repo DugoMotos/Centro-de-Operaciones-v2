@@ -3,9 +3,9 @@
    ============================================================
    Columnas:
    Código | Fecha Venta | Marca | Referencia | Cliente | Asesor
-   | Proceso Actual | Avance | Días
+   | Proceso Actual | Área | Avance | Días
 
-   Filtros (dropdowns): Área | Marca | Tipo
+   Filtros (dropdowns): Área | Marca | Tipo | Asesor
    Búsqueda: texto libre (código, cliente, asesor, referencia, actividad)
    Filtros activos se muestran como chips removibles
    ============================================================ */
@@ -33,15 +33,13 @@ function negFirstPending(ejecutadasSet) {
   return null;
 }
 
-/* Formatear fecha a dd/mm/aaaa */
+/* Formatear fecha a dd/mm/aaaa (soporta seriales de Excel) */
 function negFmtFecha(valor) {
   if (!valor) return '—';
   try {
     var d;
-    // Si es un serial de Excel (número puro)
     var numVal = Number(valor);
     if (!isNaN(numVal) && numVal > 25569 && numVal < 100000) {
-      // Excel epoch: 1899-12-30 (por el bug de 1900)
       d = new Date(Math.round((numVal - 25569) * 86400 * 1000));
     } else {
       d = new Date(valor);
@@ -57,7 +55,7 @@ function negFmtFecha(valor) {
   }
 }
 
-/* Días transcurridos desde fecha (ISO o dd/mm/aaaa) */
+/* Días transcurridos desde fecha (soporta seriales de Excel, ISO, dd/mm/aaaa) */
 function negDiasDesde(fecha) {
   if (!fecha) return 0;
   try {
@@ -135,14 +133,17 @@ function renderNegocios() {
     var linea = m.linea || m.LINEA || m.Linea || '';
     var referencia = m.referencia || m.REFERENCIA || m.Referencia || '';
     var motoRef = (linea + ' ' + referencia).trim() || '—';
-   var clienteRaw = m.cliente || m.CLIENTE || m.Cliente || '';
-var cliente = clienteRaw ? clienteRaw.toLowerCase().split(' ').map(function(w) {
-  return w.charAt(0).toUpperCase() + w.slice(1);
-}).join(' ') : '—';
+
+    var clienteRaw = m.cliente || m.CLIENTE || m.Cliente || '';
+    var cliente = clienteRaw ? clienteRaw.toLowerCase().split(' ').map(function(w) {
+      return w.charAt(0).toUpperCase() + w.slice(1);
+    }).join(' ') : '—';
+
     var asesorRaw = m.asesor || m.ASESOR || m.Asesor || '';
-var asesor = asesorRaw ? asesorRaw.toLowerCase().split(' ').map(function(w) {
-  return w.charAt(0).toUpperCase() + w.slice(1);
-}).join(' ') : '—';
+    var asesor = asesorRaw ? asesorRaw.toLowerCase().split(' ').map(function(w) {
+      return w.charAt(0).toUpperCase() + w.slice(1);
+    }).join(' ') : '—';
+
     var fecha = m.fecha_venta || m.FechaVenta || m.fechaVenta || '';
     var dias = negDiasDesde(fecha);
 
@@ -194,7 +195,7 @@ var asesor = asesorRaw ? asesorRaw.toLowerCase().split(' ').map(function(w) {
   if (negFilterArea) filtered = filtered.filter(function(x) { return x.procArea === negFilterArea; });
   if (negFilterMarca) filtered = filtered.filter(function(x) { return x.marca === negFilterMarca; });
   if (negFilterTipo) filtered = filtered.filter(function(x) { return x.tipo === negFilterTipo; });
-   if (negFilterAsesor) filtered = filtered.filter(function(x) {
+  if (negFilterAsesor) filtered = filtered.filter(function(x) {
     return x.asesor === negFilterAsesor;
   });
   if (negSearchTxt) {
@@ -252,7 +253,7 @@ var asesor = asesorRaw ? asesorRaw.toLowerCase().split(' ').map(function(w) {
     '<option value="us"' + (negFilterTipo === 'us' ? ' selected' : '') + '>Usadas</option>' +
     '</select>';
 
-   // Dropdown de asesores
+  // Dropdown de asesores
   h += '<select class="neg-select" style="height:34px;min-width:150px" onchange="negFilterAsesor=this.value;render()">';
   h += '<option value=""' + (negFilterAsesor === '' ? ' selected' : '') + '>Todos los asesores</option>';
   if (negAsesores && negAsesores.length) {
@@ -261,6 +262,9 @@ var asesor = asesorRaw ? asesorRaw.toLowerCase().split(' ').map(function(w) {
     });
   }
   h += '</select>';
+
+  h += '<button class="btn btn-o" style="width:auto;padding:0 14px;font-size:11px;height:34px" onclick="negSync()">🔄 Actualizar</button>';
+  h += '</div>';
 
   // Chips de filtros activos
   var hasFilters = negFilterArea || negFilterMarca || negFilterTipo || negFilterAsesor || negSearchTxt;
@@ -278,7 +282,7 @@ var asesor = asesorRaw ? asesorRaw.toLowerCase().split(' ').map(function(w) {
       var tLabel = negFilterTipo === 'nd' ? 'Nueva Distribución' : negFilterTipo === 'ns' ? 'Subdistribución' : 'Usadas';
       h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + tLabel + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterTipo=\'\';render()">×</span></span>';
     }
-     if (negFilterAsesor) {
+    if (negFilterAsesor) {
       h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + negFilterAsesor + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterAsesor=\'\';render()">×</span></span>';
     }
     if (negSearchTxt) {
@@ -308,7 +312,7 @@ var asesor = asesorRaw ? asesorRaw.toLowerCase().split(' ').map(function(w) {
   h += th('cliente', 'CLIENTE');
   h += th('asesor', 'ASESOR');
   h += th('proc', 'PROCESO ACTUAL');
-   h += th('procArea', 'ÁREA');
+  h += th('procArea', 'ÁREA');
   h += th('pct', 'AVANCE');
   h += th('dias', 'DÍAS', true);
   h += '</div>';
@@ -333,7 +337,7 @@ var asesor = asesorRaw ? asesorRaw.toLowerCase().split(' ').map(function(w) {
       h += '<div class="neg-cell">' + r.cliente + '</div>';
       h += '<div class="neg-cell">' + r.asesor + '</div>';
       h += '<div style="display:flex;align-items:center"><span class="neg-tag ' + (tagMap[r.procCls] || 'neg-tag-empty') + '">' + r.proc + '</span></div>';
-      h += '<div class="neg-cell" style="font-size:12px;color:var(--tm)">' + r.procArea + '</div>'; 
+      h += '<div class="neg-cell" style="font-size:12px;color:var(--tm)">' + r.procArea + '</div>';
       h += '<div class="neg-progress"><div class="neg-progress-bar"><div class="neg-progress-fill" style="width:' + r.pct + '%;background:' + negProgressColor(r.pct) + '"></div></div><span class="neg-progress-pct" style="color:' + negProgressColor(r.pct) + '">' + r.pct + '%</span></div>';
       h += '<div style="text-align:right;font-size:13px' + (daysCls ? ';' + (r.dias >= 15 ? 'color:var(--rd)' : 'color:var(--yl)') + ';font-weight:500' : '') + '">' + r.dias + '</div>';
       h += '</div>';
@@ -377,7 +381,6 @@ function negSync() {
     apiAvanceConsultar(),
     apiAsesoresConsultar()
   ]).then(function(results) {
-     
     negLoading = false;
     var motos = results[0].value || results[0] || [];
     var avances = results[1].value || results[1] || [];
