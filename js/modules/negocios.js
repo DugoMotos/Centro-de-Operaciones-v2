@@ -253,14 +253,46 @@ var asesor = asesorRaw ? asesorRaw.toLowerCase().split(' ').map(function(w) {
     '</select>';
 
    // Dropdown de asesores
-  h += '<select class="neg-select" style="height:34px;min-width:150px" onchange="negFilterAsesor=this.value;render()">';
-  h += '<option value=""' + (negFilterAsesor === '' ? ' selected' : '') + '>Todos los asesores</option>';
-  if (negAsesores && negAsesores.length) {
-    negAsesores.forEach(function(a) {
-      h += '<option value="' + a.nombre_completo + '"' + (negFilterAsesor === a.nombre_completo ? ' selected' : '') + '>' + a.nombre_completo + '</option>';
+  // Combobox de asesores (input + lista desplegable)
+  var inputValue = negAsesorDropdownOpen ? negAsesorInput : (negFilterAsesor || '');
+  var isInvalid = false;
+  if (negAsesorInput && negAsesorDropdownOpen && negAsesores) {
+    var match = negAsesores.find(function(a) {
+      return a.nombre_completo.toLowerCase().indexOf(negAsesorInput.toLowerCase()) >= 0;
     });
+    isInvalid = !match;
   }
-  h += '</select>';
+  h += '<div style="position:relative;min-width:180px">';
+  h += '<input type="text" id="negAsesorInp" class="neg-select" style="height:34px;width:100%;padding-right:26px;' + (isInvalid ? 'text-decoration:line-through;color:var(--tm);' : '') + '" placeholder="Todos los asesores" value="' + inputValue.replace(/"/g, '&quot;') + '" ';
+  h += 'onfocus="negAsesorDropdownOpen=true;negAsesorInput=\'\';render();setTimeout(function(){var el=document.getElementById(\'negAsesorInp\');if(el)el.focus()},0)" ';
+  h += 'oninput="negAsesorInput=this.value;render();setTimeout(function(){var el=document.getElementById(\'negAsesorInp\');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},0)" ';
+  h += 'onblur="setTimeout(function(){negAsesorDropdownOpen=false;render()},200)">';
+  // Ícono chevron o × para limpiar
+  if (negFilterAsesor && !negAsesorDropdownOpen) {
+    h += '<span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--tm);font-size:14px" onclick="negFilterAsesor=\'\';negAsesorInput=\'\';render()">×</span>';
+  } else {
+    h += '<span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--tm);font-size:10px;pointer-events:none">▼</span>';
+  }
+  // Lista desplegable
+  if (negAsesorDropdownOpen && negAsesores && negAsesores.length) {
+    var q = negAsesorInput.toLowerCase().trim();
+    var matches = q 
+      ? negAsesores.filter(function(a) { return a.nombre_completo.toLowerCase().indexOf(q) >= 0; })
+      : negAsesores;
+    if (matches.length) {
+      h += '<div style="position:absolute;top:38px;left:0;right:0;max-height:280px;overflow-y:auto;background:var(--bg);border:.5px solid var(--bd);border-radius:6px;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,0.15)">';
+      // Opción "Todos"
+      h += '<div style="padding:8px 12px;font-size:12px;cursor:pointer;border-bottom:.5px solid var(--bd);color:var(--tm)" onmousedown="negFilterAsesor=\'\';negAsesorInput=\'\';negAsesorDropdownOpen=false;render()">Todos los asesores</div>';
+      matches.forEach(function(a) {
+        var isSelected = a.nombre_completo === negFilterAsesor;
+        h += '<div style="padding:8px 12px;font-size:12px;cursor:pointer;' + (isSelected ? 'background:var(--bll);color:var(--bld);font-weight:600' : '') + '" onmousedown="negFilterAsesor=\'' + a.nombre_completo.replace(/'/g, "\\'") + '\';negAsesorInput=\'\';negAsesorDropdownOpen=false;render()">' + a.nombre_completo + '</div>';
+      });
+      h += '</div>';
+    } else if (q) {
+      h += '<div style="position:absolute;top:38px;left:0;right:0;padding:10px 12px;background:var(--bg);border:.5px solid var(--bd);border-radius:6px;z-index:100;font-size:11px;color:var(--tm);box-shadow:0 4px 12px rgba(0,0,0,0.15)">No se encontraron asesores con "' + negAsesorInput + '"</div>';
+    }
+  }
+  h += '</div>';
 
   h += '<button class="btn btn-o" style="width:auto;padding:0 14px;font-size:11px;height:34px" onclick="negSync()">🔄 Actualizar</button>';
   h += '</div>';
