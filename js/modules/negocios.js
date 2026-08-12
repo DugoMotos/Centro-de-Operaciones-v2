@@ -34,18 +34,26 @@ function negFirstPending(ejecutadasSet) {
 }
 
 /* Formatear fecha a dd/mm/aaaa */
-function negFmtFecha(iso) {
-  if (!iso) return '—';
+function negFmtFecha(valor) {
+  if (!valor) return '—';
   try {
-    var d = new Date(iso);
-    if (isNaN(d.getTime())) return String(iso);
+    var d;
+    // Si es un serial de Excel (número puro)
+    var numVal = Number(valor);
+    if (!isNaN(numVal) && numVal > 25569 && numVal < 100000) {
+      // Excel epoch: 1899-12-30 (por el bug de 1900)
+      d = new Date(Math.round((numVal - 25569) * 86400 * 1000));
+    } else {
+      d = new Date(valor);
+    }
+    if (isNaN(d.getTime())) return String(valor);
     var opts = { timeZone: 'America/Bogota', day: '2-digit', month: '2-digit', year: 'numeric' };
     var partes = new Intl.DateTimeFormat('es-CO', opts).formatToParts(d);
     var map = {};
     partes.forEach(function(p) { map[p.type] = p.value; });
     return map.day + '/' + map.month + '/' + map.year;
   } catch (e) {
-    return String(iso);
+    return String(valor);
   }
 }
 
@@ -54,7 +62,10 @@ function negDiasDesde(fecha) {
   if (!fecha) return 0;
   try {
     var d;
-    if (fecha.indexOf('/') >= 0) {
+    var numVal = Number(fecha);
+    if (!isNaN(numVal) && numVal > 25569 && numVal < 100000) {
+      d = new Date(Math.round((numVal - 25569) * 86400 * 1000));
+    } else if (fecha.indexOf && fecha.indexOf('/') >= 0) {
       var p = fecha.split('/');
       d = new Date(p[2], parseInt(p[1], 10) - 1, parseInt(p[0], 10));
     } else {
@@ -124,8 +135,14 @@ function renderNegocios() {
     var linea = m.linea || m.LINEA || m.Linea || '';
     var referencia = m.referencia || m.REFERENCIA || m.Referencia || '';
     var motoRef = (linea + ' ' + referencia).trim() || '—';
-    var cliente = m.cliente || m.CLIENTE || m.Cliente || '—';
-    var asesor = m.asesor || m.ASESOR || m.Asesor || '—';
+var clienteRaw = m.cliente || m.CLIENTE || m.Cliente || '';
+var cliente = clienteRaw ? clienteRaw.toLowerCase().split(' ').map(function(w) {
+  return w.charAt(0).toUpperCase() + w.slice(1);
+}).join(' ') : '—';
+    var asesorRaw = m.asesor || m.ASESOR || m.Asesor || '';
+var asesor = asesorRaw ? asesorRaw.toLowerCase().split(' ').map(function(w) {
+  return w.charAt(0).toUpperCase() + w.slice(1);
+}).join(' ') : '—';
     var fecha = m.fecha_venta || m.FechaVenta || m.fechaVenta || '';
     var dias = negDiasDesde(fecha);
 
