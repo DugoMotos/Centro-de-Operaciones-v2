@@ -70,8 +70,8 @@
 /* Columnas (grid) */
 .neg-cols{
   display:grid;
-  grid-template-columns:90px 1.4fr 110px 1.4fr 1.4fr 90px;
-  gap:18px;
+  grid-template-columns:90px 100px 70px 1.3fr 1.5fr 1.2fr 1.4fr 130px 60px;
+  gap:12px;
   align-items:center;
 }
 
@@ -271,15 +271,15 @@
    ============================================================ */
 @media(max-width:900px){
   .neg-cols{
-    grid-template-columns:80px 1.3fr 90px 1.3fr 1.2fr 70px;
-    gap:10px;
+    grid-template-columns:80px 90px 60px 1.2fr 1.3fr 1fr 1.2fr 100px 50px;
+    gap:8px;
   }
 }
 
 @media(max-width:768px){
   .neg-cols{
-    grid-template-columns:70px 1.2fr 80px 1fr 1fr 50px;
-    gap:8px;
+    grid-template-columns:70px 80px 60px 1fr 1.2fr 1fr 1.2fr 90px 40px;
+    gap:6px;
   }
   .neg-table-bar{padding:10px 14px}
   .neg-table-bar input{
@@ -305,9 +305,14 @@
 
 @media(max-width:480px){
   .neg-cols{
-    grid-template-columns:60px 1.2fr 60px 1fr 60px 40px;
-    gap:6px;
+    grid-template-columns:60px 70px 50px 1fr 1.2fr 90px 40px;
+    gap:5px;
   }
-  .neg-table-head>div:nth-child(5){display:none}
-  .neg-cols>div:nth-child(5){display:none}
+  /* Ocultar Referencia, Asesor y Marca en móvil chico para caber */
+  .neg-table-head>div:nth-child(3),
+  .neg-cols>div:nth-child(3),
+  .neg-table-head>div:nth-child(4),
+  .neg-cols>div:nth-child(4),
+  .neg-table-head>div:nth-child(6),
+  .neg-cols>div:nth-child(6){display:none}
 }
