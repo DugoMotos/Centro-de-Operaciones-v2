@@ -74,13 +74,30 @@ function aRegView() {
   var mChasis = aMoto.chasis || aMoto.CHASIS || '';
   var mCodigoBarras = aMoto.codigo_barras || aMoto.codigoBarras || aMoto.Title || '';
 
-  var h = '<div class="card"><div class="flex fxc fxb">' +
-    '<div><div style="font-size:15px;font-weight:700">' + mLinea + ' ' + mRef + '</div>' +
-    '<div style="font-size:11px;color:var(--tm);margin-top:2px">' + mColor +
-    (mChasis ? ' · Chasis: <span style="font-family:var(--fm);font-weight:600;color:#ddd">' + mChasis + '</span>' : '') +
-    (mCodigoBarras ? ' · Código: <span style="font-family:var(--fm);font-weight:600;color:var(--rd)">' + mCodigoBarras + '</span>' : '') +
-    '</div></div>' +
-    '<span class="badge" style="background:' + (marca === 'HERO' ? 'var(--gnl)' : 'var(--orl)') + ';color:' + (marca === 'HERO' ? 'var(--gnd)' : '#712B13') + '">' + marca + '</span></div></div>';
+  var mUbicacion = aMoto.ubicacion || aMoto.UBICACION || '';
+  var mModelo = aMoto.modelo || aMoto.MODELO || '';
+  var marcaBg = marca === 'HERO' 
+    ? 'linear-gradient(135deg,#085041 0%,#1D9E75 100%)' 
+    : 'linear-gradient(135deg,#712B13 0%,#993C1D 100%)';
+  var marcaAccent = marca === 'HERO' ? '#5DCAA5' : '#F0997B';
+
+  var h = '<div style="margin-bottom:14px">';
+  h += '<div style="background:' + marcaBg + ';border-radius:8px 8px 0 0;padding:14px 18px;position:relative">';
+  h += '<div style="font-size:9px;font-weight:600;letter-spacing:2px;color:rgba(255,255,255,0.6);margin-bottom:4px">' + marca + '</div>';
+  h += '<div style="font-size:20px;font-weight:700;color:#fff;letter-spacing:0.5px">' + mLinea + ' ' + mRef + '</div>';
+  var subDetails = [];
+  if (mModelo) subDetails.push('Modelo ' + mModelo);
+  if (mColor) subDetails.push(mColor);
+  if (subDetails.length) h += '<div style="font-size:11px;color:rgba(255,255,255,0.75);margin-top:2px">' + subDetails.join(' · ') + '</div>';
+  if (mCodigoBarras) h += '<div style="position:absolute;top:14px;right:18px;font-family:var(--fm);font-size:12px;font-weight:600;padding:4px 10px;border-radius:4px;background:rgba(255,255,255,0.15);color:#fff">' + mCodigoBarras + '</div>';
+  h += '</div>';
+  h += '<div style="background:var(--sf);border-radius:0 0 8px 8px;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;font-size:11px;border:0.5px solid var(--bd);border-top:none">';
+  h += '<div style="color:var(--tm)">Chasis: <span style="font-family:var(--fm);color:#ccc;font-weight:600">' + (mChasis || '—') + '</span></div>';
+  if (mUbicacion) {
+    h += '<div style="color:' + marcaAccent + ';font-weight:600">' + mUbicacion + '</div>';
+  }
+  h += '</div>';
+  h += '</div>';
 
   if (done.length) {
     h += '<div class="lbl">Completadas</div>';
@@ -202,8 +219,8 @@ function aBuscar() {
     var rs = data.value || data;
     if (!Array.isArray(rs)) rs = [];
     rs = rs.filter(function(r) { return (r.chasis || r.codigo_barras || '').toUpperCase().indexOf(code) >= 0; });
-    aLoading = false;
     if (!rs.length) {
+      aLoading = false;
       render();
       alert('El chasis ' + code + ' no se encuentra en el plan de alistamientos.\n\nPosibles causas:\n• No está programado para alistamiento\n• Ya fue entregado al cliente\n• El chasis fue digitado incorrectamente');
       return;
@@ -213,7 +230,29 @@ function aBuscar() {
     aChosen = null;
     aResp = '';
     aCmt = '';
-    render();
+
+    // Consulta adicional a BD_Tramites para traer 'ubicacion'
+    var codigoBarras = aMoto.codigo_barras || aMoto.codigoBarras || aMoto.Title || '';
+    if (codigoBarras && pCfg.tramC) {
+      apiTramConsultarMoto(codigoBarras).then(function(tramData) {
+        var rows = tramData.value || tramData;
+        var tramRow = null;
+        if (Array.isArray(rows) && rows.length > 0) tramRow = rows[0];
+        else if (rows && !Array.isArray(rows) && Object.keys(rows).length > 0) tramRow = rows;
+        if (tramRow) {
+          aMoto.ubicacion = tramRow.ubicacion || tramRow.UBICACION || tramRow.Ubicacion || '';
+        }
+        aLoading = false;
+        render();
+      }).catch(function() {
+        // Si falla, seguimos sin ubicación
+        aLoading = false;
+        render();
+      });
+    } else {
+      aLoading = false;
+      render();
+    }
   }).catch(function(e) {
     aLoading = false;
     render();
