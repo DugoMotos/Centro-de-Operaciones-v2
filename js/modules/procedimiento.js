@@ -386,7 +386,13 @@ function pFindTramStep(step) {
   for (var ti = 0; ti < TRAM_STEPS.length; ti++) {
     if (TRAM_STEPS[ti].t === step.t) return TRAM_STEPS[ti];
   }
-  if (step.c === 'tra') {
+  // Matching específico para Contabilidad (actividad #12)
+  if (step.c === 'con' && step.actNum === 12) {
+    for (var ti = 0; ti < TRAM_STEPS.length; ti++) {
+      if (TRAM_STEPS[ti].id === 's12') return TRAM_STEPS[ti];
+    }
+  }
+   if (step.c === 'tra') {
     for (var ti = 0; ti < TRAM_STEPS.length; ti++) {
       var ts = TRAM_STEPS[ti];
       if ((step.t.indexOf('Verificar ítems') >= 0 && ts.id === 's01') ||
@@ -525,7 +531,15 @@ function pReg(sid) {
     apiTramEscribirFecha(pActive, step.col, fechaSinAmbig).then(function() {
       pMotos[pActive].remote[sid] = fechaSinAmbig;
       sv(SK_P, pMotos);
-      toast('✓ ' + step.t + ' — guardado en SharePoint');
+      toast('✓ ' + step.t + ' — guardado en BD_Tramites');
+    }).catch(function() {
+      toast('✓ ' + step.t + ' — guardado local (sincronizar después)', 1);
+    });
+  } else if (step && step.bd === 'cont' && step.col && pCfg.contW) {
+    apiContEscribirFecha(pActive, fechaSinAmbig).then(function() {
+      pMotos[pActive].remote[sid] = fechaSinAmbig;
+      sv(SK_P, pMotos);
+      toast('✓ ' + step.t + ' — guardado en BD_Contabilidad');
     }).catch(function() {
       toast('✓ ' + step.t + ' — guardado local (sincronizar después)', 1);
     });
@@ -543,7 +557,13 @@ function pRegNA(sid) {
 
   if (step && step.bd === 'tram' && step.col && pCfg.tramW) {
     apiTramEscribirFecha(pActive, step.col, 'NA').then(function() {
-      toast('✓ ' + step.t + ' — N/A guardado en SharePoint');
+      toast('✓ ' + step.t + ' — N/A guardado en BD_Tramites');
+    }).catch(function() {
+      toast('✓ ' + step.t + ' — N/A guardado local', 1);
+    });
+  } else if (step && step.bd === 'cont' && step.col && pCfg.contW) {
+    apiContEscribirFecha(pActive, 'NA').then(function() {
+      toast('✓ ' + step.t + ' — N/A guardado en BD_Contabilidad');
     }).catch(function() {
       toast('✓ ' + step.t + ' — N/A guardado local', 1);
     });
