@@ -96,3 +96,5 @@ var planFilter = '';
 var planFilterProc = '';
 var planFilterEstado = '';
 var planFilterFecha = '';
+var planExpanded = {};
+var planUbicaciones = {};
