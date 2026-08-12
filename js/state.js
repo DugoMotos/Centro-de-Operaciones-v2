@@ -56,6 +56,8 @@ var negFilterMarca = '';
 var negSearchTxt = '';
 var negAsesores = null;
 var negFilterAsesor = '';
+var negAsesorInput = '';         // Lo que el usuario está escribiendo
+var negAsesorDropdownOpen = false; // Si la lista está desplegada
 
 /* ============================================================
    ESTADO DE PROCEDIMIENTO / TRÁMITES
