@@ -192,22 +192,55 @@ function renderPlan() {
     // Ubicación cacheada
     var ubicacion = planUbicaciones[g.code] || '';
 
+   // Traer datos de BD_Tramites (indexado por planUbicaciones)
+    var tramData = planUbicaciones[g.code] || {};
+    var marca = (tramData.marca || g.marca || '').toUpperCase();
+    var linea = tramData.linea || g.linea || '';
+    var referencia = tramData.referencia || acts[0].referencia || '';
+    var modelo = tramData.modelo || '';
+    var color = tramData.color || '';
+    var chasisCompleto = tramData.chasis || acts[0].chasis || '';
+    var ubicacion = tramData.ubicacion || '';
+
+    // Colores según marca (mismo estilo que Servicio Técnico)
+    var marcaBg = marca === 'HERO' 
+      ? 'linear-gradient(135deg,#085041 0%,#1D9E75 100%)' 
+      : marca === 'SYM'
+        ? 'linear-gradient(135deg,#712B13 0%,#993C1D 100%)'
+        : 'linear-gradient(135deg,#4A4A4A 0%,#6B6B6B 100%)';
+    var marcaAccent = marca === 'HERO' ? '#5DCAA5' : marca === 'SYM' ? '#F0997B' : '#B4B2A9';
+
     // Tarjeta principal
-    h += '<div style="border-radius:8px;background:var(--sf);border:.5px solid var(--bd);margin-bottom:8px;overflow:hidden">';
+    h += '<div style="border-radius:8px;margin-bottom:8px;overflow:hidden;border:.5px solid var(--bd);background:var(--sf)">';
 
-    // Cabecera clickeable
-    h += '<div style="padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px" onclick="planToggle(\'' + g.code + '\')">';
-
-    // Indicador expand
-    h += '<span style="font-size:14px;color:var(--tm);transform:rotate(' + (isExpanded ? '90' : '0') + 'deg);transition:transform .2s;flex-shrink:0">▸</span>';
-
-    // Código + contador
+    // Encabezado clickeable con degradado marca
+    h += '<div style="background:' + marcaBg + ';padding:10px 14px;cursor:pointer;position:relative" onclick="planToggle(\'' + g.code + '\')">';
+    h += '<div style="display:flex;align-items:center;gap:10px">';
+    h += '<span style="font-size:14px;color:#fff;opacity:0.8;transform:rotate(' + (isExpanded ? '90' : '0') + 'deg);transition:transform .2s;flex-shrink:0">▸</span>';
     h += '<div style="flex:1;min-width:0">';
-    h += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
-    h += '<span style="font-family:var(--fm);font-size:14px;font-weight:700">' + g.code + '</span>';
-    h += '<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:' + (pct === 100 ? 'var(--gnl)' : pct >= 50 ? 'var(--bll)' : 'var(--yll)') + ';color:' + (pct === 100 ? 'var(--gnd)' : pct >= 50 ? 'var(--bld)' : 'var(--yld)') + '">' + done + '/' + total + '</span>';
+    if (marca) h += '<div style="font-size:9px;font-weight:600;letter-spacing:2px;color:rgba(255,255,255,0.65);margin-bottom:2px">' + marca + '</div>';
+    h += '<div style="font-size:15px;font-weight:700;color:#fff;letter-spacing:0.3px">' + (linea + ' ' + referencia).trim() + '</div>';
+    h += '</div>';
+    // Chip del código de barras
+    h += '<div style="font-family:var(--fm);font-size:12px;font-weight:600;padding:4px 10px;border-radius:4px;background:rgba(255,255,255,0.18);color:#fff;flex-shrink:0">' + g.code + '</div>';
+    h += '</div>';
+    h += '</div>';
+
+    // Fila inferior: contadores + fechas
+    h += '<div style="padding:8px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:11px">';
+    // Contador
+    h += '<span style="font-weight:700;padding:3px 10px;border-radius:10px;background:' + (pct === 100 ? 'var(--gnl)' : pct >= 50 ? 'var(--bll)' : 'var(--yll)') + ';color:' + (pct === 100 ? 'var(--gnd)' : pct >= 50 ? 'var(--bld)' : 'var(--yld)') + '">' + done + '/' + total + '</span>';
+    // Ubicación
+    if (ubicacion) {
+      h += '<span style="color:' + marcaAccent + ';font-weight:600">📍 ' + ubicacion + '</span>';
+    }
+    // Fecha de solicitud
     if (fechaSolicitud) {
-      h += '<span style="font-size:9px;color:var(--tm);font-family:var(--fm)">Solicitado ' + fechaSolicitud + '</span>';
+      h += '<span style="color:var(--tm);font-family:var(--fm);font-size:10px">Solicitado ' + fechaSolicitud + '</span>';
+    }
+    // Última actualización a la derecha
+    if (ultActFecha) {
+      h += '<span style="margin-left:auto;color:var(--tm);font-family:var(--fm);font-size:10px">Últ. act. <span style="color:var(--tx);font-weight:600">' + ultActFecha + ' ' + ultActHora + '</span></span>';
     }
     h += '</div>';
 
@@ -231,7 +264,16 @@ function renderPlan() {
 
     // Cuerpo expandido
     if (isExpanded) {
-      h += '<div style="padding:0 14px 12px 14px;border-top:.5px solid var(--bd)">';
+      h += '<div style="padding:12px 14px;border-top:.5px solid var(--bd)">';
+
+      // Info adicional de la moto (chasis, modelo, color)
+      var infoLine = [];
+      if (chasisCompleto) infoLine.push('Chasis: <span style="font-family:var(--fm);color:var(--tx);font-weight:600">' + chasisCompleto + '</span>');
+      if (modelo) infoLine.push('Modelo ' + modelo);
+      if (color) infoLine.push(color);
+      if (infoLine.length) {
+        h += '<div style="font-size:10px;color:var(--tm);margin-bottom:10px;padding-bottom:10px;border-bottom:.5px dashed var(--bd)">' + infoLine.join(' · ') + '</div>';
+      }
 
       var procColor = { 'Alistamiento': '#34D399', 'Marcación': '#60A5FA', 'Defensas': '#FB923C', 'GPS': '#22D3EE', 'Placa': '#A78BFA' };
 
@@ -285,23 +327,6 @@ function renderPlan() {
 function planToggle(code) {
   planExpanded[code] = !planExpanded[code];
   render();
-
-  // Al expandir por primera vez, cargar ubicación desde BD_Tramites
-  if (planExpanded[code] && !planUbicaciones[code] && pCfg.tramC) {
-    apiTramConsultarMoto(code).then(function(data) {
-      var rows = data.value || data;
-      var row = null;
-      if (Array.isArray(rows) && rows.length > 0) row = rows[0];
-      else if (rows && !Array.isArray(rows) && Object.keys(rows).length > 0) row = rows;
-      if (row) {
-        planUbicaciones[code] = row.ubicacion || row.UBICACION || row.Ubicacion || 'Sin ubicación';
-        render();
-      }
-    }).catch(function() {
-      planUbicaciones[code] = 'Sin ubicación';
-      render();
-    });
-  }
 }
 
 function planSync() {
@@ -309,14 +334,34 @@ function planSync() {
   planLoading = true;
   render();
 
-  apiPlanConsultar('*').then(function(data) {
-    planData = data.value || data;
+  Promise.all([
+    apiPlanConsultar('*'),
+    pCfg.tramC ? apiTramListar() : Promise.resolve({ value: [] })
+  ]).then(function(results) {
+    planData = results[0].value || results[0];
     if (!Array.isArray(planData)) planData = [];
-    planLoading = false;
-    // Al recargar, resetear expansiones y cache de ubicaciones
-    planExpanded = {};
+
+    // Indexar motos por código_barras desde BD_Tramites
+    var tramMotos = results[1].value || results[1] || [];
+    if (!Array.isArray(tramMotos)) tramMotos = [];
     planUbicaciones = {};
-    toast('✓ ' + planData.length + ' registros cargados');
+    tramMotos.forEach(function(m) {
+      var code = (m.codigo_barras || m.codigoBarras || m.Title || '').toUpperCase();
+      if (!code) return;
+      planUbicaciones[code] = {
+        ubicacion: m.ubicacion || m.UBICACION || m.Ubicacion || '',
+        chasis: m.chasis || m.CHASIS || m.Chasis || '',
+        modelo: m.modelo || m.MODELO || m.Modelo || '',
+        color: m.color || m.COLOR || m.Color || '',
+        marca: m.marca || m.MARCA || m.Marca || '',
+        linea: m.linea || m.LINEA || m.Linea || '',
+        referencia: m.referencia || m.REFERENCIA || m.Referencia || ''
+      };
+    });
+
+    planLoading = false;
+    planExpanded = {};
+    toast('✓ ' + planData.length + ' actividades / ' + tramMotos.length + ' motos');
     render();
   }).catch(function() {
     planLoading = false;
