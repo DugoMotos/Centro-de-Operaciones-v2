@@ -292,6 +292,7 @@ var asesor = asesorRaw ? asesorRaw.toLowerCase().split(' ').map(function(w) {
   h += th('cliente', 'CLIENTE');
   h += th('asesor', 'ASESOR');
   h += th('proc', 'PROCESO ACTUAL');
+   h += th('procArea', 'ÁREA');
   h += th('pct', 'AVANCE');
   h += th('dias', 'DÍAS', true);
   h += '</div>';
@@ -316,6 +317,7 @@ var asesor = asesorRaw ? asesorRaw.toLowerCase().split(' ').map(function(w) {
       h += '<div class="neg-cell">' + r.cliente + '</div>';
       h += '<div class="neg-cell">' + r.asesor + '</div>';
       h += '<div style="display:flex;align-items:center"><span class="neg-tag ' + (tagMap[r.procCls] || 'neg-tag-empty') + '">' + r.proc + '</span></div>';
+      h += '<div class="neg-cell" style="font-size:12px;color:var(--tm)">' + r.procArea + '</div>'; 
       h += '<div class="neg-progress"><div class="neg-progress-bar"><div class="neg-progress-fill" style="width:' + r.pct + '%;background:' + negProgressColor(r.pct) + '"></div></div><span class="neg-progress-pct" style="color:' + negProgressColor(r.pct) + '">' + r.pct + '%</span></div>';
       h += '<div style="text-align:right;font-size:13px' + (daysCls ? ';' + (r.dias >= 15 ? 'color:var(--rd)' : 'color:var(--yl)') + ';font-weight:500' : '') + '">' + r.dias + '</div>';
       h += '</div>';
