@@ -216,7 +216,9 @@ var TRAM_STEPS = [
   { id: 's08', t: 'Entregar paquetes para matricular', bd: 'tram', col: 'matricula', tp: 'reg' },
   { id: 's09', t: 'Verificar matrícula en RUNT', bd: 'tram', col: 'mat_ok', tp: 'reg' },
   { id: 's10', t: 'Recepción de placa y matrícula', bd: 'tram', col: 'rec_placa', tp: 'reg' },
-  { id: 's11', t: 'Activar garantía', bd: 'tram', col: 'garantia', tp: 'reg' }
+  { id: 's11', t: 'Activar garantía', bd: 'tram', col: 'garantia', tp: 'reg' },
+   { id: 's12', t: 'Facturar motocicleta', bd: 'cont', col: 'fact_dist', tp: 'reg' }
+   
 ];
 
 /* Opciones de actividades de alistamiento programables */
