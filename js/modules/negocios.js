@@ -194,6 +194,9 @@ var asesor = asesorRaw ? asesorRaw.toLowerCase().split(' ').map(function(w) {
   if (negFilterArea) filtered = filtered.filter(function(x) { return x.procArea === negFilterArea; });
   if (negFilterMarca) filtered = filtered.filter(function(x) { return x.marca === negFilterMarca; });
   if (negFilterTipo) filtered = filtered.filter(function(x) { return x.tipo === negFilterTipo; });
+   if (negFilterAsesor) filtered = filtered.filter(function(x) {
+    return x.asesor === negFilterAsesor;
+  });
   if (negSearchTxt) {
     var s = negSearchTxt.toLowerCase();
     filtered = filtered.filter(function(x) {
@@ -249,11 +252,21 @@ var asesor = asesorRaw ? asesorRaw.toLowerCase().split(' ').map(function(w) {
     '<option value="us"' + (negFilterTipo === 'us' ? ' selected' : '') + '>Usadas</option>' +
     '</select>';
 
+   // Dropdown de asesores
+  h += '<select class="neg-select" style="height:34px;min-width:150px" onchange="negFilterAsesor=this.value;render()">';
+  h += '<option value=""' + (negFilterAsesor === '' ? ' selected' : '') + '>Todos los asesores</option>';
+  if (negAsesores && negAsesores.length) {
+    negAsesores.forEach(function(a) {
+      h += '<option value="' + a.nombre_completo + '"' + (negFilterAsesor === a.nombre_completo ? ' selected' : '') + '>' + a.nombre_completo + '</option>';
+    });
+  }
+  h += '</select>';
+
   h += '<button class="btn btn-o" style="width:auto;padding:0 14px;font-size:11px;height:34px" onclick="negSync()">🔄 Actualizar</button>';
   h += '</div>';
 
   // Chips de filtros activos
-  var hasFilters = negFilterArea || negFilterMarca || negFilterTipo || negSearchTxt;
+  var hasFilters = negFilterArea || negFilterMarca || negFilterTipo || negFilterAsesor || negSearchTxt;
   if (hasFilters) {
     h += '<div style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 0;border-top:0.5px solid var(--bd);border-bottom:0.5px solid var(--bd);margin-bottom:10px;align-items:center">';
     h += '<span style="font-size:10px;color:var(--tm);margin-right:4px">FILTROS ACTIVOS:</span>';
@@ -268,10 +281,13 @@ var asesor = asesorRaw ? asesorRaw.toLowerCase().split(' ').map(function(w) {
       var tLabel = negFilterTipo === 'nd' ? 'Nueva Distribución' : negFilterTipo === 'ns' ? 'Subdistribución' : 'Usadas';
       h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + tLabel + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterTipo=\'\';render()">×</span></span>';
     }
+     if (negFilterAsesor) {
+      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + negFilterAsesor + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterAsesor=\'\';render()">×</span></span>';
+    }
     if (negSearchTxt) {
       h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">"' + negSearchTxt + '" <span style="cursor:pointer;font-weight:700" onclick="negSearchTxt=\'\';render()">×</span></span>';
     }
-    h += '<span style="font-size:11px;color:var(--bl);cursor:pointer;margin-left:6px;text-decoration:underline" onclick="negFilterArea=\'\';negFilterMarca=\'\';negFilterTipo=\'\';negSearchTxt=\'\';render()">Limpiar todos</span>';
+    h += '<span style="font-size:11px;color:var(--bl);cursor:pointer;margin-left:6px;text-decoration:underline" onclick="negFilterArea=\'\';negFilterMarca=\'\';negFilterTipo=\'\';negFilterAsesor=\'\';negSearchTxt=\'\';render()">Limpiar todos</span>';
     h += '</div>';
   }
 
@@ -361,8 +377,10 @@ function negSync() {
 
   Promise.all([
     apiTramListar(),
-    apiAvanceConsultar()
+    apiAvanceConsultar(),
+    apiAsesoresConsultar()
   ]).then(function(results) {
+     
     negLoading = false;
     var motos = results[0].value || results[0] || [];
     var avances = results[1].value || results[1] || [];
@@ -370,6 +388,7 @@ function negSync() {
     if (!Array.isArray(avances)) avances = [];
     negMotos = motos;
     negAvances = avances;
+    negAsesores = results[2] || [];
     _negScopeCache = null;
     toast('✓ ' + motos.length + ' motos cargadas');
     render();
