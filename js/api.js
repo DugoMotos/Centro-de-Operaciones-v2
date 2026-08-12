@@ -99,6 +99,13 @@ function apiContEscribirFecha(codigo_barras, fecha) {
   });
 }
 
+function apiInvEscribirPlaca(codigo_barras, placa) {
+  return apiPost(getUrl('invW'), {
+    codigo_barras: codigo_barras,
+    placa: placa
+  });
+}
+
 function apiTramListar() {
   return apiPost(getUrl('tramLista'), {}, API_TIMEOUT_LONG);
 }
