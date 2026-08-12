@@ -1,27 +1,16 @@
 /* ============================================================
-   NEGOCIOS.JS — Módulo Negocios
+   NEGOCIOS.JS — Módulo Negocios Activos (Opción A: barra + chips)
    ============================================================
-   Funciones expuestas:
-   - renderNegocios(): genera el HTML del módulo
-   - negSync(): carga motos + avances desde BD_Tramites + Supabase
-   - negSort(key): ordena por columna
-   - negShowComment(code): placeholder para comentarios
+   Columnas:
+   Código | Fecha Venta | Marca | Referencia | Cliente | Asesor
+   | Proceso Actual | Avance | Días
 
-   Estado: variables neg* en state.js
-   APIs: apiTramListar (Power Automate), apiAvanceConsultar (Supabase)
-
-   Migración jun/jul 2026:
-   - "Actividad en curso" = primera pendiente del catálogo Trámites+Contabilidad
-     ordenada por 'orden', no la última ejecutada.
-   - Nueva columna: Área responsable de la actividad en curso.
-   - Nueva columna: Última actualización (MAX created_at de registros).
-   - Sin numeración #N en textos visibles.
+   Filtros (dropdowns): Área | Marca | Tipo
+   Búsqueda: texto libre (código, cliente, asesor, referencia, actividad)
+   Filtros activos se muestran como chips removibles
    ============================================================ */
 
-/* Helper: catálogo de manuales del scope Trámites + Contabilidad
-   ordenado por 'orden'. Se computa una vez y se cachea.
-   NOTA: si en el futuro ACTIVIDADES_TRAM cambia dinámicamente,
-   convertir en función que recalcule cada vez. */
+/* Scope de manuales Trámites + Contabilidad ordenadas por 'orden' */
 var _negScopeCache = null;
 function negGetScopeActs() {
   if (_negScopeCache) return _negScopeCache;
@@ -34,37 +23,75 @@ function negGetScopeActs() {
   return _negScopeCache;
 }
 
-/* Helper: dado un set de actividad_num ejecutadas, devuelve la
-   PRIMERA actividad pendiente del scope, o null si no hay más. */
+/* Primera pendiente del scope según set de ejecutadas */
 function negFirstPending(ejecutadasSet) {
   var scope = negGetScopeActs();
   for (var i = 0; i < scope.length; i++) {
     var actNum = parseInt(scope[i].num, 10);
-    if (!ejecutadasSet[actNum]) {
-      return scope[i];
-    }
+    if (!ejecutadasSet[actNum]) return scope[i];
   }
   return null;
 }
 
-/* Helper: formatear fecha ISO a dd/mm/aaaa hh:mm en zona Bogotá */
-function negFmtFechaHora(iso) {
+/* Formatear fecha a dd/mm/aaaa */
+function negFmtFecha(iso) {
   if (!iso) return '—';
   try {
     var d = new Date(iso);
-    if (isNaN(d.getTime())) return '—';
-    var opts = {
-      timeZone: 'America/Bogota',
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit', hour12: false
-    };
+    if (isNaN(d.getTime())) return String(iso);
+    var opts = { timeZone: 'America/Bogota', day: '2-digit', month: '2-digit', year: 'numeric' };
     var partes = new Intl.DateTimeFormat('es-CO', opts).formatToParts(d);
     var map = {};
     partes.forEach(function(p) { map[p.type] = p.value; });
-    return map.day + '/' + map.month + '/' + map.year + ' ' + map.hour + ':' + map.minute;
+    return map.day + '/' + map.month + '/' + map.year;
   } catch (e) {
-    return '—';
+    return String(iso);
   }
+}
+
+/* Días transcurridos desde fecha (ISO o dd/mm/aaaa) */
+function negDiasDesde(fecha) {
+  if (!fecha) return 0;
+  try {
+    var d;
+    if (fecha.indexOf('/') >= 0) {
+      var p = fecha.split('/');
+      d = new Date(p[2], parseInt(p[1], 10) - 1, parseInt(p[0], 10));
+    } else {
+      d = new Date(fecha);
+    }
+    if (isNaN(d.getTime())) return 0;
+    var ms = new Date().getTime() - d.getTime();
+    return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
+  } catch (e) {
+    return 0;
+  }
+}
+
+/* Normalización de marca */
+function negNormMarca(m) {
+  m = (m || '').toString().toUpperCase().trim();
+  if (m === 'HERO') return 'HERO';
+  if (m === 'SYM') return 'SYM';
+  if (!m) return '';
+  return 'OTRA';
+}
+
+/* Normalización de tipo */
+function negNormTipo(t) {
+  t = (t || '').toString().toLowerCase().trim();
+  if (t.indexOf('nueva') >= 0) return 'nd';
+  if (t.indexOf('sub') >= 0) return 'ns';
+  if (t.indexOf('usad') >= 0) return 'us';
+  return '';
+}
+
+/* Color de la barra de avance */
+function negProgressColor(pct) {
+  if (pct >= 100) return 'var(--gn)';
+  if (pct >= 75) return 'var(--gn)';
+  if (pct >= 50) return 'var(--yl)';
+  return 'var(--or)';
 }
 
 function renderNegocios() {
@@ -94,11 +121,14 @@ function renderNegocios() {
     var code = m.codigo_barras || m.codigoBarras || m.Title || '';
     var tipo = negNormTipo(m.tipo_motocicleta || m.tipo);
     var marca = negNormMarca(m.marca || m.MARCA || m.Marca);
-    var moto = ((m.linea || m.LINEA || '') + ' ' + (m.referencia || m.REFERENCIA || '')).trim() || '—';
+    var linea = m.linea || m.LINEA || m.Linea || '';
+    var referencia = m.referencia || m.REFERENCIA || m.Referencia || '';
+    var motoRef = (linea + ' ' + referencia).trim() || '—';
+    var cliente = m.cliente || m.CLIENTE || m.Cliente || '—';
+    var asesor = m.asesor || m.ASESOR || m.Asesor || '—';
     var fecha = m.fecha_venta || m.FechaVenta || m.fechaVenta || '';
     var dias = negDiasDesde(fecha);
 
-    // Registros de esta moto
     var actividades = (negAvances || []).filter(function(r) {
       return (r.codigo_barras || r.Title || '') === code;
     });
@@ -106,80 +136,59 @@ function renderNegocios() {
       return (r.estado || '').toLowerCase() === 'ejecutada';
     });
 
-    // Set de actividad_num ejecutadas (solo primarias, sin ".x")
     var ejecutadasSet = {};
     ejecutadas.forEach(function(r) {
       var n = String(r.actividad_num || '');
-      if (n && n.indexOf('.') < 0) {
-        ejecutadasSet[parseInt(n, 10)] = true;
-      }
+      if (n && n.indexOf('.') < 0) ejecutadasSet[parseInt(n, 10)] = true;
     });
 
-    // Contar solo las del scope Trámites+Contabilidad ejecutadas
     var doneScope = 0;
     scopeActs.forEach(function(a) {
       if (ejecutadasSet[parseInt(a.num, 10)]) doneScope++;
     });
     var pct = totalScope ? Math.round((doneScope / totalScope) * 100) : 0;
 
-    // ── ACTIVIDAD EN CURSO: primera pendiente del scope ──
     var enCurso = negFirstPending(ejecutadasSet);
-    var actLabel, actArea, actCls;
+    var procLabel, procArea, procCls;
     if (enCurso) {
-      actLabel = enCurso.titulo;
-      actArea = enCurso.responsable;
-      actCls = pct === 100 ? 'green' : pct >= 75 ? 'green' : pct >= 50 ? 'warn' : 'purple';
+      procLabel = enCurso.titulo;
+      procArea = enCurso.responsable;
+      procCls = pct === 100 ? 'green' : pct >= 75 ? 'green' : pct >= 50 ? 'warn' : 'purple';
     } else if (doneScope > 0) {
-      actLabel = 'Proceso finalizado';
-      actArea = '—';
-      actCls = 'green';
+      procLabel = 'Proceso finalizado';
+      procArea = '—';
+      procCls = 'green';
     } else {
-      actLabel = '—';
-      actArea = '—';
-      actCls = 'empty';
+      procLabel = '—';
+      procArea = '—';
+      procCls = 'empty';
     }
 
-    // ── ÚLTIMA ACTUALIZACIÓN: MAX created_at de esta moto ──
-    var maxIso = null;
-    actividades.forEach(function(r) {
-      var t = r.created_at || r.fecha_registro || null;
-      if (t && (!maxIso || t > maxIso)) maxIso = t;
-    });
-    var ultActLabel = negFmtFechaHora(maxIso);
-    var ultActSort = maxIso || '';
-
     return {
-      code: code, moto: moto, marca: marca, tipo: tipo, fecha: fecha,
-      dias: dias, pct: pct, doneCount: doneScope,
-      act: actLabel, actArea: actArea, actCls: actCls,
-      ultAct: ultActLabel, ultActSort: ultActSort,
-      com: '', comAuthor: '', comDate: ''
+      code: code, marca: marca, referencia: motoRef, cliente: cliente,
+      asesor: asesor, fecha: fecha, dias: dias, pct: pct,
+      proc: procLabel, procArea: procArea, procCls: procCls,
+      tipo: tipo
     };
   }).filter(function(r) { return r.code; });
 
-  // Filtros
+  // Aplicar filtros
   var filtered = rows.slice();
-  if (negFilterTipo) filtered = filtered.filter(function(x) { return x.tipo === negFilterTipo; });
+  if (negFilterArea) filtered = filtered.filter(function(x) { return x.procArea === negFilterArea; });
   if (negFilterMarca) filtered = filtered.filter(function(x) { return x.marca === negFilterMarca; });
+  if (negFilterTipo) filtered = filtered.filter(function(x) { return x.tipo === negFilterTipo; });
   if (negSearchTxt) {
     var s = negSearchTxt.toLowerCase();
     filtered = filtered.filter(function(x) {
-      return (x.code + ' ' + x.moto + ' ' + x.act + ' ' + x.actArea).toLowerCase().indexOf(s) >= 0;
+      return (x.code + ' ' + x.referencia + ' ' + x.cliente + ' ' + x.asesor + ' ' + x.proc).toLowerCase().indexOf(s) >= 0;
     });
   }
 
-  // Conteos para filtros
-  var cNd = rows.filter(function(r) { return r.tipo === 'nd'; }).length;
-  var cNs = rows.filter(function(r) { return r.tipo === 'ns'; }).length;
-  var cUs = rows.filter(function(r) { return r.tipo === 'us'; }).length;
-
-  // Orden
+  // Ordenar
   filtered.sort(function(a, b) {
     var va = a[negSortKey], vb = b[negSortKey];
     if (negSortKey === 'pct' || negSortKey === 'dias') {
       va = Number(va); vb = Number(vb);
-    } else if (negSortKey === 'ultAct') {
-      va = a.ultActSort; vb = b.ultActSort;
     } else {
       va = String(va).toLowerCase(); vb = String(vb).toLowerCase();
     }
@@ -188,37 +197,70 @@ function renderNegocios() {
     return 0;
   });
 
-  // Header
   var h = '<div class="eyebrow">VENTAS</div><h1 class="h1">Negocios activos</h1>' +
     '<div class="sub-title">Lista de motocicletas en proceso · clic en encabezados para ordenar</div>';
 
-  // Filtros
-  h += '<div class="neg-filters">';
-  h += '<div class="neg-filter-block"><span class="neg-select-label">Tipo de moto</span>' +
-    '<select class="neg-select" onchange="negFilterTipo=this.value;render()">' +
-    '<option value=""' + (negFilterTipo === '' ? ' selected' : '') + '>Todos los tipos</option>' +
-    '<option value="nd"' + (negFilterTipo === 'nd' ? ' selected' : '') + '>Nueva Distribución (' + cNd + ')</option>' +
-    '<option value="ns"' + (negFilterTipo === 'ns' ? ' selected' : '') + '>Subdistribución (' + cNs + ')</option>' +
-    '<option value="us"' + (negFilterTipo === 'us' ? ' selected' : '') + '>Usadas (' + cUs + ')</option>' +
-    '</select></div>';
-  h += '<div class="neg-filter-block"><span class="neg-select-label">Marca</span>' +
-    '<select class="neg-select" onchange="negFilterMarca=this.value;render()">' +
+  // Barra de filtros: búsqueda + dropdowns
+  h += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">';
+  h += '<div style="flex:1;min-width:220px;position:relative">';
+  h += '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--tm);font-size:13px">🔍</span>';
+  h += '<input type="text" class="inp" placeholder="Buscar código, cliente, asesor, actividad..." value="' + negSearchTxt + '" oninput="negSearchTxt=this.value;render()" style="padding-left:32px;font-size:12px;height:34px">';
+  h += '</div>';
+
+  h += '<select class="neg-select" style="height:34px;min-width:130px" onchange="negFilterArea=this.value;render()">' +
+    '<option value=""' + (negFilterArea === '' ? ' selected' : '') + '>Todas las áreas</option>' +
+    '<option value="Trámites"' + (negFilterArea === 'Trámites' ? ' selected' : '') + '>Trámites</option>' +
+    '<option value="Contabilidad"' + (negFilterArea === 'Contabilidad' ? ' selected' : '') + '>Contabilidad</option>' +
+    '<option value="Logística"' + (negFilterArea === 'Logística' ? ' selected' : '') + '>Logística</option>' +
+    '<option value="Inventario"' + (negFilterArea === 'Inventario' ? ' selected' : '') + '>Inventario</option>' +
+    '</select>';
+
+  h += '<select class="neg-select" style="height:34px;min-width:120px" onchange="negFilterMarca=this.value;render()">' +
     '<option value=""' + (negFilterMarca === '' ? ' selected' : '') + '>Todas las marcas</option>' +
     '<option value="HERO"' + (negFilterMarca === 'HERO' ? ' selected' : '') + '>Hero</option>' +
     '<option value="SYM"' + (negFilterMarca === 'SYM' ? ' selected' : '') + '>SYM</option>' +
     '<option value="OTRA"' + (negFilterMarca === 'OTRA' ? ' selected' : '') + '>Otra</option>' +
-    '</select></div>';
-  h += '<button class="btn btn-o" style="width:auto;padding:9px 16px;font-size:11px;height:38px;align-self:flex-end" onclick="negSync()">🔄 Actualizar</button>';
+    '</select>';
+
+  h += '<select class="neg-select" style="height:34px;min-width:150px" onchange="negFilterTipo=this.value;render()">' +
+    '<option value=""' + (negFilterTipo === '' ? ' selected' : '') + '>Todos los tipos</option>' +
+    '<option value="nd"' + (negFilterTipo === 'nd' ? ' selected' : '') + '>Nueva Distribución</option>' +
+    '<option value="ns"' + (negFilterTipo === 'ns' ? ' selected' : '') + '>Subdistribución</option>' +
+    '<option value="us"' + (negFilterTipo === 'us' ? ' selected' : '') + '>Usadas</option>' +
+    '</select>';
+
+  h += '<button class="btn btn-o" style="width:auto;padding:0 14px;font-size:11px;height:34px" onclick="negSync()">🔄 Actualizar</button>';
   h += '</div>';
+
+  // Chips de filtros activos
+  var hasFilters = negFilterArea || negFilterMarca || negFilterTipo || negSearchTxt;
+  if (hasFilters) {
+    h += '<div style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 0;border-top:0.5px solid var(--bd);border-bottom:0.5px solid var(--bd);margin-bottom:10px;align-items:center">';
+    h += '<span style="font-size:10px;color:var(--tm);margin-right:4px">FILTROS ACTIVOS:</span>';
+    if (negFilterArea) {
+      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + negFilterArea + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterArea=\'\';render()">×</span></span>';
+    }
+    if (negFilterMarca) {
+      var mLabel = negFilterMarca === 'HERO' ? 'Hero' : negFilterMarca === 'SYM' ? 'SYM' : 'Otra';
+      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + mLabel + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterMarca=\'\';render()">×</span></span>';
+    }
+    if (negFilterTipo) {
+      var tLabel = negFilterTipo === 'nd' ? 'Nueva Distribución' : negFilterTipo === 'ns' ? 'Subdistribución' : 'Usadas';
+      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + tLabel + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterTipo=\'\';render()">×</span></span>';
+    }
+    if (negSearchTxt) {
+      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">"' + negSearchTxt + '" <span style="cursor:pointer;font-weight:700" onclick="negSearchTxt=\'\';render()">×</span></span>';
+    }
+    h += '<span style="font-size:11px;color:var(--bl);cursor:pointer;margin-left:6px;text-decoration:underline" onclick="negFilterArea=\'\';negFilterMarca=\'\';negFilterTipo=\'\';negSearchTxt=\'\';render()">Limpiar todos</span>';
+    h += '</div>';
+  }
 
   // Tabla
   h += '<div class="neg-table">';
   h += '<div class="neg-table-bar">';
   h += '<div class="neg-table-count">' + filtered.length + ' NEGOCIO' + (filtered.length !== 1 ? 'S' : '') + ' EN CURSO</div>';
-  h += '<input type="text" class="inp-sm" placeholder="Buscar código, moto, actividad..." value="' + negSearchTxt + '" oninput="negSearchTxt=this.value;render()" style="width:280px">';
   h += '</div>';
 
-  // Encabezados
   function th(key, label, right) {
     var active = negSortKey === key;
     var arrowUp = active && negSortDir === 'asc' ? ' on' : '';
@@ -227,11 +269,12 @@ function renderNegocios() {
   }
   h += '<div class="neg-cols neg-table-head">';
   h += th('code', 'CÓDIGO');
-  h += th('moto', 'MOTO');
   h += th('fecha', 'FECHA VENTA');
-  h += th('act', 'ACTIVIDAD EN CURSO');
-  h += th('actArea', 'ÁREA');
-  h += th('ultAct', 'ÚLTIMA ACTUALIZACIÓN');
+  h += th('marca', 'MARCA');
+  h += th('referencia', 'REFERENCIA');
+  h += th('cliente', 'CLIENTE');
+  h += th('asesor', 'ASESOR');
+  h += th('proc', 'PROCESO ACTUAL');
   h += th('pct', 'AVANCE');
   h += th('dias', 'DÍAS', true);
   h += '</div>';
@@ -242,24 +285,20 @@ function renderNegocios() {
     var tagMap = {
       warn: 'neg-tag-warn',
       purple: 'neg-tag-purple',
-      red: 'neg-tag-red',
       green: 'neg-tag-green',
-      blue: 'neg-tag-blue',
       empty: 'neg-tag-empty'
     };
     filtered.forEach(function(r) {
-      var commentBlock = r.com
-        ? '<span class="neg-comment-icon" onclick="event.stopPropagation();negShowComment(\'' + r.code + '\')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg><span class="neg-comment-dot"></span></span>'
-        : '<span class="neg-comment-spacer"></span>';
       var markCls = r.marca === 'HERO' ? 'hero' : r.marca === 'SYM' ? 'sym' : 'otra';
       var daysCls = r.dias >= 15 ? ' neg-days-danger' : r.dias >= 10 ? ' neg-days-warn' : '';
       h += '<div class="neg-cols neg-row">';
       h += '<div class="neg-code">' + r.code + '</div>';
-      h += '<div><div class="neg-cell">' + r.moto + '</div><span class="neg-mark ' + markCls + '">' + r.marca + '</span></div>';
       h += '<div class="neg-fecha">' + negFmtFecha(r.fecha) + '</div>';
-      h += '<div style="display:flex;align-items:center"><span class="neg-tag ' + (tagMap[r.actCls] || 'neg-tag-empty') + '">' + r.act + '</span>' + commentBlock + '</div>';
-      h += '<div style="font-size:12px;color:var(--tx)">' + r.actArea + '</div>';
-      h += '<div style="font-size:11px;color:var(--tm);font-family:var(--fm)">' + r.ultAct + '</div>';
+      h += '<div><span class="neg-mark ' + markCls + '">' + (r.marca || '—') + '</span></div>';
+      h += '<div class="neg-cell">' + r.referencia + '</div>';
+      h += '<div class="neg-cell">' + r.cliente + '</div>';
+      h += '<div class="neg-cell">' + r.asesor + '</div>';
+      h += '<div style="display:flex;align-items:center"><span class="neg-tag ' + (tagMap[r.procCls] || 'neg-tag-empty') + '">' + r.proc + '</span></div>';
       h += '<div class="neg-progress"><div class="neg-progress-bar"><div class="neg-progress-fill" style="width:' + r.pct + '%;background:' + negProgressColor(r.pct) + '"></div></div><span class="neg-progress-pct" style="color:' + negProgressColor(r.pct) + '">' + r.pct + '%</span></div>';
       h += '<div style="text-align:right;font-size:13px' + (daysCls ? ';' + (r.dias >= 15 ? 'color:var(--rd)' : 'color:var(--yl)') + ';font-weight:500' : '') + '">' + r.dias + '</div>';
       h += '</div>';
@@ -279,16 +318,11 @@ function negSort(key) {
   render();
 }
 
-function negShowComment(code) {
-  toast('Comentarios pendientes de implementar');
-}
-
 function negSync() {
   negLoading = true;
   negError = '';
   render();
 
-  // Check de BD_Tramites (sigue en Power Automate)
   if (!getUrl('tramLista')) {
     negLoading = false;
     negError = 'Falta URL de TRAM_Consulta_Lista en Configuración';
@@ -296,10 +330,9 @@ function negSync() {
     return;
   }
 
-  // Check de Supabase (nuevo)
   if (!supabaseReady()) {
     negLoading = false;
-    negError = 'Supabase no configurado (revisá SUPABASE_URL y SUPABASE_ANON_KEY en config.js)';
+    negError = 'Supabase no configurado';
     render();
     return;
   }
@@ -315,7 +348,6 @@ function negSync() {
     if (!Array.isArray(avances)) avances = [];
     negMotos = motos;
     negAvances = avances;
-    // Invalidar cache del scope por si ACTIVIDADES_TRAM cambió
     _negScopeCache = null;
     toast('✓ ' + motos.length + ' motos cargadas');
     render();
