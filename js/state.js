@@ -54,6 +54,8 @@ var negFilterArea = '';
 var negFilterTipo = '';
 var negFilterMarca = '';
 var negSearchTxt = '';
+var negAsesores = null;
+var negFilterAsesor = '';
 
 /* ============================================================
    ESTADO DE PROCEDIMIENTO / TRÁMITES
