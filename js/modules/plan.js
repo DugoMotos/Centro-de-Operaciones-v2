@@ -220,6 +220,9 @@ function renderPlan() {
     h += '<div style="flex:1;min-width:0">';
     if (marca) h += '<div style="font-size:9px;font-weight:600;letter-spacing:2px;color:rgba(255,255,255,0.65);margin-bottom:2px">' + marca + '</div>';
     h += '<div style="font-size:15px;font-weight:700;color:#fff;letter-spacing:0.3px">' + (linea + ' ' + referencia).trim() + '</div>';
+    if (chasisCompleto) {
+      h += '<div style="font-size:11px;font-family:var(--fm);color:rgba(255,255,255,0.75);margin-top:2px;letter-spacing:0.5px">' + chasisCompleto + '</div>';
+    }
     h += '</div>';
     // Chip del código de barras
     h += '<div style="font-family:var(--fm);font-size:12px;font-weight:600;padding:4px 10px;border-radius:4px;background:rgba(255,255,255,0.18);color:#fff;flex-shrink:0">' + g.code + '</div>';
@@ -268,8 +271,7 @@ function renderPlan() {
 
       // Info adicional de la moto (chasis, modelo, color)
       var infoLine = [];
-      if (chasisCompleto) infoLine.push('Chasis: <span style="font-family:var(--fm);color:var(--tx);font-weight:600">' + chasisCompleto + '</span>');
-      if (modelo) infoLine.push('Modelo ' + modelo);
+            if (modelo) infoLine.push('Modelo ' + modelo);
       if (color) infoLine.push(color);
       if (infoLine.length) {
         h += '<div style="font-size:10px;color:var(--tm);margin-bottom:10px;padding-bottom:10px;border-bottom:.5px dashed var(--bd)">' + infoLine.join(' · ') + '</div>';
