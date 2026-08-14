@@ -10,7 +10,7 @@
    NAVEGACIÓN
    ============================================================ */
 /* Sección activa: 'negocios' | 'proc' | 'alist' | 'plan' | 'config' */
-var main = 'proc';
+var main = 'home';
 
 /* ============================================================
    AUTENTICACIÓN
