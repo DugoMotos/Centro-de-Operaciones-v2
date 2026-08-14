@@ -385,14 +385,3 @@ function planSync() {
     render();
   });
 }
-
-    planLoading = false;
-    planExpanded = {};
-    toast('✓ ' + planData.length + ' actividades / ' + tramMotos.length + ' motos');
-    render();
-  }).catch(function() {
-    planLoading = false;
-    toast('Error al cargar datos', 1);
-    render();
-  });
-}
