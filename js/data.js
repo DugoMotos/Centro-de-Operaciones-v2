@@ -59,12 +59,15 @@ var RESP_R = {
 
 var ALL_R = [
   'Samuel Vásquez',
-  'Servicio Técnico',
   'Gregorio Brito',
+  'Alejandro Gómez',
+  'Sebastián Urrego',
+  'Simón Celis',
+  'Jefferson Ríos',
+  'Johan Ríos',
   'Moto Working',
   'Externo GPS',
-  'Externo Marcación',
-  'Eder'
+  'Externo marcación'
 ];
 
 /* ============================================================
