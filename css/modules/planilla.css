@@ -1,0 +1,325 @@
+/* ============================================================
+   PLANILLA.CSS — Estilos de la planilla diaria imprimible
+   ============================================================ */
+
+.planilla-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  padding: 12px 0;
+  border-bottom: 0.5px solid var(--bd);
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.planilla-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.planilla-filter-lbl {
+  font-size: 9px;
+  color: var(--tl);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.planilla-filter .inp {
+  height: 34px;
+  min-width: 150px;
+}
+
+.planilla-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #b4b4bb;
+  cursor: pointer;
+  padding: 0 12px;
+  height: 34px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 6px;
+  border: 0.5px solid var(--bd);
+}
+.planilla-check input { cursor: pointer; }
+
+/* KPIs */
+.planilla-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.planilla-kpi {
+  padding: 14px 16px;
+  border-radius: 8px;
+}
+.planilla-kpi-hero {
+  background: rgba(29,158,117,0.08);
+  border: 0.5px solid rgba(29,158,117,0.4);
+}
+.planilla-kpi-sym {
+  background: rgba(217,90,48,0.08);
+  border: 0.5px solid rgba(217,90,48,0.4);
+}
+.planilla-kpi-otra,
+.planilla-kpi-sin_marca {
+  background: rgba(255,255,255,0.03);
+  border: 0.5px solid var(--bd);
+}
+
+.planilla-kpi-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--tm);
+}
+.planilla-kpi-hero .planilla-kpi-label { color: #5DCAA5; }
+.planilla-kpi-sym .planilla-kpi-label { color: #F0997B; }
+
+.planilla-kpi-value {
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--tx);
+  margin-top: 4px;
+  line-height: 1.1;
+}
+.planilla-kpi-sub {
+  font-size: 11px;
+  color: var(--tm);
+  font-weight: 400;
+  margin-left: 6px;
+}
+
+.planilla-kpi-breakdown {
+  display: flex;
+  gap: 14px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 0.5px solid rgba(255,255,255,0.08);
+  font-size: 11px;
+}
+.planilla-kpi-mini-lbl {
+  font-size: 9px;
+  color: var(--tm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.planilla-kpi-mini-val {
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* Bloque por marca */
+.planilla-block {
+  margin-bottom: 20px;
+}
+.planilla-block-head {
+  padding: 14px 18px;
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.planilla-block-hero .planilla-block-head {
+  background: linear-gradient(135deg, #085041 0%, #1D9E75 100%);
+}
+.planilla-block-sym .planilla-block-head {
+  background: linear-gradient(135deg, #712B13 0%, #993C1D 100%);
+}
+.planilla-block-otra .planilla-block-head {
+  background: linear-gradient(135deg, #4A4A4A 0%, #6B6B6B 100%);
+}
+.planilla-block-marca {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  color: rgba(255,255,255,0.7);
+}
+.planilla-block-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  margin-top: 2px;
+}
+.planilla-block-count {
+  font-size: 11px;
+  color: rgba(255,255,255,0.9);
+  font-weight: 600;
+  background: rgba(255,255,255,0.15);
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+.planilla-block-body {
+  background: var(--sf);
+  border: 0.5px solid var(--bd);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+}
+.planilla-block-footer {
+  display: none;
+}
+
+.planilla-row {
+  display: grid;
+  grid-template-columns: 80px 110px 1.3fr 1.3fr 1fr 150px;
+  gap: 12px;
+  padding: 10px 16px;
+  align-items: center;
+  font-size: 12px;
+  border-bottom: 0.5px solid rgba(255,255,255,0.03);
+}
+.planilla-row-head {
+  font-size: 9px;
+  color: var(--tm);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  background: rgba(255,255,255,0.02);
+  border-bottom: 0.5px solid var(--bd);
+  font-weight: 600;
+}
+.planilla-row:last-child { border-bottom: none; }
+.planilla-code {
+  font-family: var(--fm);
+  color: var(--rd);
+  font-weight: 600;
+  font-size: 13px;
+}
+.planilla-chasis {
+  font-family: var(--fm);
+  color: #aaa;
+  font-size: 10px;
+}
+.planilla-chasis strong { color: #eaeaea; }
+.planilla-modelo { color: #ccc; }
+.planilla-tec { color: #aaa; font-size: 11px; }
+.planilla-act { color: #ddd; }
+.planilla-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+.planilla-firma { text-align: right; }
+.planilla-firma-head { text-align: right; }
+.planilla-tag-ejec {
+  font-size: 9px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: rgba(29,158,117,0.15);
+  color: #5DCAA5;
+  font-weight: 600;
+}
+
+/* ============================================================
+   IMPRESIÓN - Vista blanca formal
+   ============================================================ */
+@media print {
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+  body { background: #fff !important; color: #111 !important; }
+  .side, .mobile-bar, .planilla-toolbar, .planilla-kpis { display: none !important; }
+  .app { grid-template-columns: 1fr !important; }
+  .main { padding: 0 !important; }
+  .eyebrow, .h1, .sub-title { display: none !important; }
+
+  .planilla-print-page { page-break-after: always; }
+  .planilla-print-page:last-child { page-break-after: auto; }
+
+  .planilla-block {
+    margin-bottom: 0;
+    box-shadow: none;
+  }
+  .planilla-block-head {
+    background: #fff !important;
+    color: #111 !important;
+    padding: 0 0 12px 0 !important;
+    border-radius: 0 !important;
+    border-bottom: 2px solid #111 !important;
+  }
+  .planilla-block-marca {
+    color: #666 !important;
+    font-size: 10px !important;
+    letter-spacing: 2px !important;
+  }
+  .planilla-block-title {
+    color: #111 !important;
+    font-size: 20px !important;
+    font-weight: 700 !important;
+  }
+  .planilla-block-count {
+    background: transparent !important;
+    color: #111 !important;
+    font-size: 12px !important;
+    padding: 0 !important;
+    font-weight: 600 !important;
+  }
+
+  .planilla-block-body {
+    background: #fff !important;
+    border: none !important;
+  }
+
+  .planilla-row {
+    background: #fff !important;
+    border-bottom: 0.5px solid #ddd !important;
+    padding: 10px 0 !important;
+  }
+  .planilla-row-head {
+    background: #fff !important;
+    border-bottom: 1.5px solid #111 !important;
+    color: #444 !important;
+    font-weight: 700 !important;
+    padding: 8px 0 !important;
+  }
+  .planilla-code { color: #111 !important; }
+  .planilla-chasis, .planilla-modelo, .planilla-tec, .planilla-act {
+    color: #333 !important;
+  }
+  .planilla-chasis strong { color: #000 !important; }
+  .planilla-firma-empty {
+    border-left: 1px dashed #999 !important;
+    border-right: 1px dashed #999 !important;
+    min-height: 30px !important;
+  }
+  .planilla-tag-ejec {
+    background: transparent !important;
+    color: #14804A !important;
+    border: 0.5px solid #14804A;
+  }
+  .planilla-dot { display: none !important; }
+
+  .planilla-block-footer {
+    display: flex !important;
+    justify-content: space-between !important;
+    margin-top: 20px !important;
+    padding-top: 10px !important;
+    border-top: 1px solid #ccc !important;
+    font-size: 10px !important;
+    color: #666 !important;
+  }
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .planilla-row {
+    grid-template-columns: 70px 90px 1fr 1fr 90px 130px;
+    gap: 8px;
+  }
+}
+@media (max-width: 700px) {
+  .planilla-row {
+    grid-template-columns: 60px 80px 1fr 1fr 100px;
+  }
+  .planilla-row > div:nth-child(6) { display: none; }
+}
