@@ -586,30 +586,21 @@ function pToggle(opt) {
 function pConfirmAlist() {
   if (!pAlistSel.length) return;
   var now = new Date();
-  var fechaLocal = fIso(now);
+  var total = pAlistSel.length;
   pMotos[pActive].steps.s02 = now.toISOString();
   pMotos[pActive].alist = pAlistSel.slice();
   sv(SK_P, pMotos);
 
-  if (pCfg.planW) {
-    var total = pAlistSel.length;
-    var done = 0;
-    pAlistSel.forEach(function(act) {
-      apiPlanEscribir({
-        id: pActive + '_' + act,
-        codigoBarras: pActive,
-        proceso: act,
-        fecha: fechaLocal
-      }).then(function() {
-        done++;
-        if (done === total) toast('✓ ' + total + ' filas creadas en Plan de alistamientos');
-      }).catch(function() {
-        done++;
-        if (done === total) toast('Algunas actividades no se sincronizaron', 1);
+  if (typeof supabaseReady === 'function' && supabaseReady() && typeof apiRegAlistCrear === 'function') {
+    apiRegAlistCrear(pActive, pAlistSel)
+      .then(function() {
+        toast('✓ ' + total + ' alistamiento' + (total !== 1 ? 's' : '') + ' programado' + (total !== 1 ? 's' : '') + ' en Supabase');
+      })
+      .catch(function(e) {
+        toast('Error al programar en Supabase: ' + (e.message || 'desconocido'), 1);
       });
-    });
   } else {
-    toast('✓ ' + pAlistSel.length + ' actividades programadas');
+    toast('✓ ' + total + ' actividades programadas (solo local)');
   }
   pAlistSel = [];
   render();
@@ -620,23 +611,19 @@ function pConfirmAlist() {
    ============================================================ */
 function pRegPlaca() {
   var now = new Date();
-  var fechaLocal = fIso(now);
   pMotos[pActive].steps['placa_programada'] = now.toISOString();
   sv(SK_P, pMotos);
 
-  if (pCfg.planW) {
-    apiPlanEscribir({
-      id: pActive + '_Placa',
-      codigoBarras: pActive,
-      proceso: 'Placa',
-      fecha: fechaLocal
-    }).then(function() {
-      toast('✓ Placa registrada en Plan de alistamientos');
-    }).catch(function() {
-      toast('Placa guardada local', 1);
-    });
+  if (typeof supabaseReady === 'function' && supabaseReady() && typeof apiRegAlistCrear === 'function') {
+    apiRegAlistCrear(pActive, ['Instalación Placa'])
+      .then(function() {
+        toast('✓ Placa programada en Supabase');
+      })
+      .catch(function(e) {
+        toast('Error al programar placa: ' + (e.message || 'desconocido'), 1);
+      });
   } else {
-    toast('✓ Placa programada');
+    toast('✓ Placa programada (solo local)');
   }
   render();
 }
