@@ -267,3 +267,64 @@ function apiRegAlistCrear(codigo_barras, procesosNombres) {
     return apiSupabase('POST', '/rest/v1/registro_alistamientos', filas);
   });
 }
+
+/* ============================================================
+   apiRegAlistConsultar — Trae registros con JOIN a procesos/técnicos
+   ============================================================
+   Filtros opcionales:
+   - codigo (string): un solo código de barras
+   - fecha (YYYY-MM-DD): solo registros de esa fecha
+   - estado ('pendiente' | 'ejecutada'): filtra por estado
+
+   Devuelve array con proceso_nombre y tecnico_nombre ya resueltos
+   (usando embed de PostgREST)
+   ============================================================ */
+function apiRegAlistConsultar(opts) {
+  opts = opts || {};
+  var params = [];
+
+  // Select con embed (JOIN implícito de PostgREST)
+  params.push('select=id,codigo_barras,estado,fecha_programacion,fecha_ejecucion,observaciones,created_at,updated_at,proceso:procesos_alistamiento(id,nombre,orden),tecnico:tecnicos_alistamiento(id,nombre_completo,tipo)');
+
+  if (opts.codigo) {
+    params.push('codigo_barras=eq.' + encodeURIComponent(opts.codigo));
+  }
+  if (opts.estado) {
+    params.push('estado=eq.' + encodeURIComponent(opts.estado));
+  }
+  if (opts.fecha) {
+    // Rango del día completo
+    params.push('fecha_programacion=gte.' + opts.fecha + 'T00:00:00');
+    params.push('fecha_programacion=lte.' + opts.fecha + 'T23:59:59');
+  }
+
+  params.push('order=fecha_programacion.desc,created_at.desc');
+
+  var path = '/rest/v1/registro_alistamientos?' + params.join('&');
+  return apiSupabase('GET', path);
+}
+
+/* ============================================================
+   apiRegAlistMarcarEjecutada — Marca un registro como ejecutado
+   ============================================================
+   Actualiza estado, fecha_ejecucion y opcionalmente tecnico_id.
+   ============================================================ */
+function apiRegAlistMarcarEjecutada(registroId, tecnicoNombre) {
+  var nowIso = new Date().toISOString();
+  var body = {
+    estado: 'ejecutada',
+    fecha_ejecucion: nowIso
+  };
+
+  // Si viene técnico, resolver su ID primero
+  if (tecnicoNombre) {
+    var pathTec = '/rest/v1/tecnicos_alistamiento' +
+                  '?select=id&nombre_completo=eq.' + encodeURIComponent(tecnicoNombre);
+    return apiSupabase('GET', pathTec).then(function(tecnicos) {
+      if (tecnicos && tecnicos.length) body.tecnico_id = tecnicos[0].id;
+      return apiSupabase('PATCH', '/rest/v1/registro_alistamientos?id=eq.' + registroId, body);
+    });
+  }
+
+  return apiSupabase('PATCH', '/rest/v1/registro_alistamientos?id=eq.' + registroId, body);
+}
