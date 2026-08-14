@@ -207,56 +207,103 @@ function aResView() {
    ============================================================ */
 function aBuscar() {
   var inp = document.getElementById('aIn');
-  var code = (inp ? inp.value : '').trim().toUpperCase();
-  if (!code || code.length < 5) { toast('Mín 5 caracteres', 1); return; }
-  var url = aCfg.urlC || pCfg.planC;
-  if (!url) { toast('Configura URL de consulta', 1); return; }
+  var raw = (inp ? inp.value : '').trim().toUpperCase();
+  if (!raw || raw.length < 5) { toast('Mín 5 caracteres', 1); return; }
+
+  if (!supabaseReady()) {
+    toast('Supabase no configurado', 1);
+    return;
+  }
 
   aLoading = true;
   render();
 
-  apiAlistConsultar(code).then(function(data) {
-    var rs = data.value || data;
-    if (!Array.isArray(rs)) rs = [];
-    rs = rs.filter(function(r) { return (r.chasis || r.codigo_barras || '').toUpperCase().indexOf(code) >= 0; });
-    if (!rs.length) {
+  // Detección automática: DM + números = código directo
+  //                       resto = chasis parcial → resolver en BD_Tramites
+  var esCodigoDM = /^DM\d+$/.test(raw);
+
+  var promesaCodigo;
+  if (esCodigoDM) {
+    // Búsqueda directa
+    promesaCodigo = Promise.resolve(raw);
+  } else {
+    // Resolver chasis parcial en BD_Tramites
+    if (!pCfg.tramC) {
       aLoading = false;
       render();
-      alert('El chasis ' + code + ' no se encuentra en el plan de alistamientos.\n\nPosibles causas:\n• No está programado para alistamiento\n• Ya fue entregado al cliente\n• El chasis fue digitado incorrectamente');
+      alert('Para buscar por chasis parcial necesitás configurar BD_Tramites');
       return;
     }
-    aRows = rs;
-    aMoto = rs[0];
-    aChosen = null;
-    aResp = '';
-    aCmt = '';
-
-    // Consulta adicional a BD_Tramites para traer 'ubicacion'
-    var codigoBarras = aMoto.codigo_barras || aMoto.codigoBarras || aMoto.Title || '';
-    if (codigoBarras && pCfg.tramC) {
-      apiTramConsultarMoto(codigoBarras).then(function(tramData) {
-        var rows = tramData.value || tramData;
-        var tramRow = null;
-        if (Array.isArray(rows) && rows.length > 0) tramRow = rows[0];
-        else if (rows && !Array.isArray(rows) && Object.keys(rows).length > 0) tramRow = rows;
-        if (tramRow) {
-          aMoto.ubicacion = tramRow.ubicacion || tramRow.UBICACION || tramRow.Ubicacion || '';
-        }
-        aLoading = false;
-        render();
-      }).catch(function() {
-        // Si falla, seguimos sin ubicación
-        aLoading = false;
-        render();
+    promesaCodigo = apiTramListar().then(function(data) {
+      var motos = data.value || data || [];
+      if (!Array.isArray(motos)) motos = [];
+      var match = motos.find(function(m) {
+        var chasis = (m.chasis || m.CHASIS || m.Chasis || '').toUpperCase();
+        return chasis && chasis.endsWith(raw);
       });
-    } else {
-      aLoading = false;
-      render();
-    }
+      if (!match) throw new Error('CHASIS_NO_ENCONTRADO');
+      return match.codigo_barras || match.codigoBarras || match.Title;
+    });
+  }
+
+  promesaCodigo.then(function(codigoBarras) {
+    // Ahora sí, buscar en Supabase con el código resuelto
+    return apiRegAlistConsultar({ codigo: codigoBarras }).then(function(registros) {
+      if (!registros || !registros.length) {
+        throw new Error('SIN_ALISTAMIENTOS');
+      }
+
+      // Adaptar shape
+      aRows = registros.map(function(r) {
+        return {
+          id: r.id,
+          codigo_barras: r.codigo_barras,
+          chasis: r.codigo_barras,
+          fecha: r.fecha_programacion,
+          fecha_ejecucion: r.fecha_ejecucion,
+          proceso: (r.proceso && r.proceso.nombre) || '—',
+          estado: r.estado,
+          ejecuto: (r.tecnico && r.tecnico.nombre_completo) || '',
+          responsable: (r.tecnico && r.tecnico.nombre_completo) || ''
+        };
+      });
+      aMoto = aRows[0];
+      aChosen = null;
+      aResp = '';
+      aCmt = '';
+
+      // Consulta adicional a BD_Tramites para datos completos
+      if (pCfg.tramC) {
+        return apiTramConsultarMoto(codigoBarras).then(function(tramData) {
+          var rows = tramData.value || tramData;
+          var tramRow = null;
+          if (Array.isArray(rows) && rows.length > 0) tramRow = rows[0];
+          else if (rows && !Array.isArray(rows) && Object.keys(rows).length > 0) tramRow = rows;
+          if (tramRow) {
+            aMoto.ubicacion = tramRow.ubicacion || tramRow.UBICACION || '';
+            aMoto.marca = tramRow.marca || tramRow.MARCA || '';
+            aMoto.linea = tramRow.linea || tramRow.LINEA || '';
+            aMoto.referencia = tramRow.referencia || tramRow.REFERENCIA || '';
+            aMoto.modelo = tramRow.modelo || tramRow.MODELO || '';
+            aMoto.color = tramRow.color || tramRow.COLOR || '';
+            aMoto.chasis = tramRow.chasis || tramRow.CHASIS || codigoBarras;
+          }
+        }).catch(function() {});
+      }
+    });
+  }).then(function() {
+    aLoading = false;
+    render();
   }).catch(function(e) {
     aLoading = false;
     render();
-    alert(e.name === 'AbortError' ? 'Tiempo agotado al consultar.' : 'Error de conexión: ' + e.message);
+    if (e.message === 'CHASIS_NO_ENCONTRADO') {
+      alert('El chasis con final "' + raw + '" no se encuentra en BD_Tramites.\n\nVerificá que el chasis exista y que los últimos dígitos coincidan.');
+    } else if (e.message === 'SIN_ALISTAMIENTOS') {
+      alert('La moto no tiene alistamientos programados en el sistema.\n\nPosibles causas:\n• Aún no se corrió la actividad "Programar alistamientos" en Trámites\n• Ya fueron ejecutados y no quedan pendientes');
+    } else {
+      alert('Error al consultar: ' + (e.message || 'desconocido'));
+    }
   });
 }
 
