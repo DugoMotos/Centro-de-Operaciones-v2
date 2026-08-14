@@ -2,46 +2,14 @@
    PLANILLA.JS — Reporte diario imprimible de alistamientos
    ============================================================
    Consulta registro_alistamientos filtrado por fecha_programacion
-   y hace merge con BD_Tramites para traer datos de la moto
-   (marca, línea, referencia, chasis, modelo, color, ubicación)
+   y hace merge con BD_Tramites para traer datos de la moto.
 
-   Filtros: fecha, marca, proceso, incluir_ejecutadas
-   Vista impresa: 1 hoja por marca con columna de firma
+   Vista: bloque por marca (HERO, SYM, Bajaj) siempre visibles
+   Orden fijo: Alistamiento → Marcación → Defensas → GPS → Placa
+   La Placa aparece con separador visual al final
    ============================================================ */
 
-/* Formatear fecha a dd/mm/aaaa desde YYYY-MM-DD */
-function planillaFmtFechaLarga(iso) {
-  if (!iso) return '';
-  try {
-    var d = new Date(iso + 'T00:00:00');
-    if (isNaN(d.getTime())) return iso;
-    var opts = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Bogota' };
-    var s = new Intl.DateTimeFormat('es-CO', opts).format(d);
-    return s.charAt(0).toUpperCase() + s.slice(1);
-  } catch (e) { return iso; }
-}
-
-/* Formatear hora hh:mm */
-function planillaFmtHora(iso) {
-  if (!iso) return '';
-  try {
-    var d = new Date(iso);
-    if (isNaN(d.getTime())) return '';
-    var opts = { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit', hour12: false };
-    return new Intl.DateTimeFormat('es-CO', opts).format(d);
-  } catch (e) { return ''; }
-}
-
-/* Normalización de marca */
-function planillaNormMarca(m) {
-  m = (m || '').toString().toUpperCase().trim();
-  if (m === 'HERO') return 'HERO';
-  if (m === 'SYM') return 'SYM';
-  if (!m) return 'SIN_MARCA';
-  return 'OTRA';
-}
-
-/* Colores por proceso */
+/* Colores por proceso (coinciden con alistamiento.js) */
 var PLANILLA_PROC_COLOR = {
   'Alistamiento': '#34D399',
   'Marcación': '#60A5FA',
@@ -50,39 +18,96 @@ var PLANILLA_PROC_COLOR = {
   'Instalación Placa': '#A78BFA'
 };
 
+/* Orden fijo de procesos dentro de cada bloque */
+var PLANILLA_PROC_ORDEN = {
+  'Alistamiento': 1,
+  'Marcación': 2,
+  'Defensas': 3,
+  'Instalación GPS': 4,
+  'Instalación Placa': 5
+};
+
+/* Marcas siempre visibles */
+var PLANILLA_MARCAS_FIJAS = ['HERO', 'SYM', 'BAJAJ'];
+
+/* Formatear fecha larga */
+function planillaFmtFechaLarga(iso) {
+  if (!iso) return '';
+  try {
+    var d = new Date(iso + 'T00:00:00');
+    if (isNaN(d.getTime())) return iso;
+    var s = new Intl.DateTimeFormat('es-CO', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'America/Bogota'
+    }).format(d);
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  } catch (e) { return iso; }
+}
+
+/* Formatear hora */
+function planillaFmtHora(iso) {
+  if (!iso) return '';
+  try {
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return new Intl.DateTimeFormat('es-CO', {
+      timeZone: 'America/Bogota',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).format(d);
+  } catch (e) { return ''; }
+}
+
+/* Normalización de marca */
+function planillaNormMarca(m) {
+  m = (m || '').toString().toUpperCase().trim();
+  if (m === 'HERO') return 'HERO';
+  if (m === 'SYM') return 'SYM';
+  if (m === 'BAJAJ') return 'BAJAJ';
+  return 'OTRA';
+}
+
+/* ============================================================
+   renderPlanilla — Render principal
+   ============================================================ */
 function renderPlanilla() {
   var h = '<div class="eyebrow">SERVICIO TÉCNICO / REPORTE</div><h1 class="h1">Planilla diaria</h1>' +
-    '<div class="sub-title">Programación de alistamientos por marca · lista para imprimir</div>';
+    '<div class="sub-title">Alistamientos programados y ejecutados · agrupados por marca</div>';
 
   // Toolbar filtros
-  h += '<div class="planilla-toolbar">';
-  h += '<div class="planilla-filter">';
-  h += '<div class="planilla-filter-lbl">Fecha</div>';
-  h += '<input type="date" class="inp" value="' + planillaFecha + '" onchange="planillaFecha=this.value;planillaSync()">';
+  h += '<div class="plnl-toolbar">';
+  h += '<div class="plnl-filter">';
+  h += '<div class="plnl-filter-lbl">Fecha</div>';
+  h += '<input type="date" class="plnl-inp" value="' + planillaFecha + '" onchange="planillaFecha=this.value;planillaSync()">';
   h += '</div>';
-  h += '<div class="planilla-filter">';
-  h += '<div class="planilla-filter-lbl">Marca</div>';
-  h += '<select class="inp" onchange="planillaFilterMarca=this.value;render()">';
+  h += '<div class="plnl-filter">';
+  h += '<div class="plnl-filter-lbl">Marca</div>';
+  h += '<select class="plnl-inp" onchange="planillaFilterMarca=this.value;render()">';
   h += '<option value=""' + (planillaFilterMarca === '' ? ' selected' : '') + '>Todas</option>';
   h += '<option value="HERO"' + (planillaFilterMarca === 'HERO' ? ' selected' : '') + '>HERO</option>';
   h += '<option value="SYM"' + (planillaFilterMarca === 'SYM' ? ' selected' : '') + '>SYM</option>';
+  h += '<option value="BAJAJ"' + (planillaFilterMarca === 'BAJAJ' ? ' selected' : '') + '>Bajaj</option>';
   h += '</select>';
   h += '</div>';
-  h += '<div class="planilla-filter">';
-  h += '<div class="planilla-filter-lbl">Proceso</div>';
-  h += '<select class="inp" onchange="planillaFilterProc=this.value;render()">';
+  h += '<div class="plnl-filter">';
+  h += '<div class="plnl-filter-lbl">Proceso</div>';
+  h += '<select class="plnl-inp" onchange="planillaFilterProc=this.value;render()">';
   h += '<option value=""' + (planillaFilterProc === '' ? ' selected' : '') + '>Todos</option>';
   ['Alistamiento', 'Marcación', 'Defensas', 'Instalación GPS', 'Instalación Placa'].forEach(function(p) {
     h += '<option value="' + p + '"' + (planillaFilterProc === p ? ' selected' : '') + '>' + p + '</option>';
   });
   h += '</select>';
   h += '</div>';
-  h += '<label class="planilla-check">';
+  h += '<label class="plnl-check">';
   h += '<input type="checkbox"' + (planillaMostrarEjec ? ' checked' : '') + ' onchange="planillaMostrarEjec=this.checked;render()">';
   h += '<span>Mostrar ejecutadas</span>';
   h += '</label>';
   h += '<div style="flex:1"></div>';
-  h += '<button class="btn btn-o" style="width:auto;padding:0 14px;height:34px;font-size:11px" onclick="window.print()">🖨 Imprimir</button>';
+  h += '<button class="plnl-btn" onclick="window.print()">🖨 Imprimir</button>';
   h += '</div>';
 
   if (planillaLoading) {
@@ -91,140 +116,162 @@ function renderPlanilla() {
   }
 
   if (!planillaData) {
-    h += '<div style="text-align:center;padding:40px;color:var(--tm);font-size:12px">Presiona una fecha para cargar la planilla</div>';
+    h += '<div style="text-align:center;padding:40px;color:var(--tm);font-size:12px">Selecciona una fecha para cargar la planilla</div>';
     return h;
   }
 
-  // Aplicar filtros
-  var filtered = planillaData.slice();
+  // Determinar qué marcas mostrar según filtro
+  var marcasVisibles = planillaFilterMarca
+    ? [planillaFilterMarca]
+    : PLANILLA_MARCAS_FIJAS;
+
+  // Renderizar cada bloque de marca
+  marcasVisibles.forEach(function(m) {
+    h += planillaRenderBlock(m);
+  });
+
+  return h;
+}
+
+/* ============================================================
+   planillaRenderBlock — Renderiza un bloque de marca
+   ============================================================ */
+function planillaRenderBlock(marca) {
+  var mLabel = marca === 'BAJAJ' ? 'BAJAJ' : marca;
+  var mCls = marca === 'HERO' ? 'hero' : marca === 'SYM' ? 'sym' : marca === 'BAJAJ' ? 'bajaj' : 'otra';
+
+  // Filtrar registros de esta marca
+  var registros = (planillaData || []).filter(function(r) { return r.marca === marca; });
+
+  // Aplicar filtros de UI
+  var filtered = registros.slice();
   if (!planillaMostrarEjec) {
     filtered = filtered.filter(function(r) { return r.estado === 'pendiente'; });
   }
   if (planillaFilterProc) {
     filtered = filtered.filter(function(r) { return r.proceso === planillaFilterProc; });
   }
-  if (planillaFilterMarca) {
-    filtered = filtered.filter(function(r) { return r.marca === planillaFilterMarca; });
-  }
 
-  // Agrupar por marca
-  var grupos = {};
-  filtered.forEach(function(r) {
-    var marca = r.marca || 'SIN_MARCA';
-    if (!grupos[marca]) grupos[marca] = [];
-    grupos[marca].push(r);
+  // Contar por proceso (sobre TODA la data de la marca, no la filtrada)
+  var counts = {
+    'Alistamiento': 0,
+    'Marcación': 0,
+    'Defensas': 0,
+    'Instalación GPS': 0,
+    'Instalación Placa': 0
+  };
+  registros.forEach(function(r) {
+    if (counts[r.proceso] !== undefined) counts[r.proceso]++;
   });
+  var total = registros.length;
 
-  // KPIs por marca (contando TODA la data, no la filtrada por checkbox)
-  var kpis = {};
-  planillaData.forEach(function(r) {
-    var marca = r.marca || 'SIN_MARCA';
-    if (!kpis[marca]) kpis[marca] = { total: 0, ejec: 0, pend: 0, motos: {} };
-    kpis[marca].total++;
-    if (r.estado === 'ejecutada' || r.estado === 'ejecutado') kpis[marca].ejec++;
-    else kpis[marca].pend++;
-    kpis[marca].motos[r.codigo_barras] = true;
-  });
+  var h = '<div class="plnl-block plnl-block-' + mCls + '">';
 
-  var totalRegistros = filtered.length;
-  if (totalRegistros === 0) {
-    h += '<div style="text-align:center;padding:40px;color:var(--tm);font-size:12px">Sin actividades programadas para esta fecha con los filtros aplicados</div>';
+  // Encabezado: badge + título + corp
+  h += '<div class="plnl-head">';
+  h += '<div class="plnl-brand-badge">' + mLabel + '</div>';
+  h += '<div class="plnl-head-center">';
+  h += '<div class="plnl-head-title">Alistamiento Diario</div>';
+  h += '<div class="plnl-head-date">' + planillaFmtFechaLarga(planillaFecha) + '</div>';
+  h += '</div>';
+  h += '<div class="plnl-corp">DUGOMOTOS</div>';
+  h += '</div>';
+
+  // Grid de 6 celdas
+  h += '<div class="plnl-summary">';
+  h += '<div class="plnl-sum-cell"><div class="plnl-sum-lbl">Alistamiento</div><div class="plnl-sum-val">' + counts['Alistamiento'] + '</div></div>';
+  h += '<div class="plnl-sum-cell"><div class="plnl-sum-lbl">Marcación</div><div class="plnl-sum-val">' + counts['Marcación'] + '</div></div>';
+  h += '<div class="plnl-sum-cell"><div class="plnl-sum-lbl">Defensas</div><div class="plnl-sum-val">' + counts['Defensas'] + '</div></div>';
+  h += '<div class="plnl-sum-cell"><div class="plnl-sum-lbl">GPS</div><div class="plnl-sum-val">' + counts['Instalación GPS'] + '</div></div>';
+  h += '<div class="plnl-sum-cell"><div class="plnl-sum-lbl">Placa</div><div class="plnl-sum-val plnl-sum-placa">' + counts['Instalación Placa'] + '</div></div>';
+  h += '<div class="plnl-sum-cell"><div class="plnl-sum-lbl">Total</div><div class="plnl-sum-val plnl-sum-total">' + total + '</div></div>';
+  h += '</div>';
+
+  // Si no hay filas después de filtrar, mensaje vacío
+  if (filtered.length === 0) {
+    h += '<div class="plnl-empty-block">Sin actividades para mostrar con los filtros actuales</div>';
+    h += '</div>';
     return h;
   }
 
-  // KPIs cards
-  h += '<div class="planilla-kpis">';
-  ['HERO', 'SYM', 'OTRA', 'SIN_MARCA'].forEach(function(m) {
-    if (!kpis[m]) return;
-    var k = kpis[m];
-    var motoCount = Object.keys(k.motos).length;
-    var label = m === 'SIN_MARCA' ? 'Sin marca' : m;
-    h += '<div class="planilla-kpi planilla-kpi-' + m.toLowerCase() + '">';
-    h += '<div class="planilla-kpi-header">';
-    h += '<div class="planilla-kpi-label">' + label + '</div>';
-    h += '<div class="planilla-kpi-value">' + motoCount + ' <span class="planilla-kpi-sub">motos</span></div>';
-    h += '</div>';
-    h += '<div class="planilla-kpi-breakdown">';
-    h += '<div><div class="planilla-kpi-mini-lbl">Total actividades</div><div class="planilla-kpi-mini-val">' + k.total + '</div></div>';
-    h += '<div><div class="planilla-kpi-mini-lbl">Ejecutadas</div><div class="planilla-kpi-mini-val" style="color:#5DCAA5">' + k.ejec + '</div></div>';
-    h += '<div><div class="planilla-kpi-mini-lbl">Pendientes</div><div class="planilla-kpi-mini-val" style="color:#EF9F27">' + k.pend + '</div></div>';
-    h += '</div>';
-    h += '</div>';
+  // Ordenar filas: primero por orden del proceso, luego por código
+  filtered.sort(function(a, b) {
+    var oA = PLANILLA_PROC_ORDEN[a.proceso] || 99;
+    var oB = PLANILLA_PROC_ORDEN[b.proceso] || 99;
+    if (oA !== oB) return oA - oB;
+    return a.codigo_barras.localeCompare(b.codigo_barras);
   });
-  h += '</div>';
 
-  // Bloques por marca
-  var ordenMarcas = ['HERO', 'SYM', 'OTRA', 'SIN_MARCA'];
-  ordenMarcas.forEach(function(m) {
-    if (!grupos[m]) return;
-    var registros = grupos[m];
-    var motoCount = {};
-    registros.forEach(function(r) { motoCount[r.codigo_barras] = true; });
-    var motoTotal = Object.keys(motoCount).length;
+  // Detectar el índice de la primera fila de Placa
+  var indexPrimeraPlaca = -1;
+  for (var i = 0; i < filtered.length; i++) {
+    if (filtered[i].proceso === 'Instalación Placa') {
+      indexPrimeraPlaca = i;
+      break;
+    }
+  }
 
-    var mCls = m === 'HERO' ? 'hero' : m === 'SYM' ? 'sym' : 'otra';
-    var mLabel = m === 'SIN_MARCA' ? 'Sin marca' : m;
+  // Tabla
+  h += '<table class="plnl-table">';
+  h += '<thead><tr>';
+  h += '<th>Cód.</th>';
+  h += '<th>Chasis</th>';
+  h += '<th>Referencia</th>';
+  h += '<th>Color</th>';
+  h += '<th>Cliente</th>';
+  h += '<th>Proceso</th>';
+  h += '<th>Estado</th>';
+  h += '<th>Ejecutó</th>';
+  h += '<th>Hora</th>';
+  h += '</tr></thead><tbody>';
 
-    h += '<div class="planilla-block planilla-block-' + mCls + ' planilla-print-page">';
-    h += '<div class="planilla-block-head">';
-    h += '<div>';
-    h += '<div class="planilla-block-marca">' + mLabel + '</div>';
-    h += '<div class="planilla-block-title">Plan del día · ' + planillaFmtFechaLarga(planillaFecha) + '</div>';
-    h += '</div>';
-    h += '<div class="planilla-block-count">' + motoTotal + ' motos · ' + registros.length + ' actividades</div>';
-    h += '</div>';
+  filtered.forEach(function(r, idx) {
+    var isEjec = r.estado === 'ejecutada' || r.estado === 'ejecutado';
+    var procColor = PLANILLA_PROC_COLOR[r.proceso] || '#6d6d75';
+    var isPlacaFirst = idx === indexPrimeraPlaca;
 
-    h += '<div class="planilla-block-body">';
-    // Header
-    h += '<div class="planilla-row planilla-row-head">';
-    h += '<div>Código</div>';
-    h += '<div>Chasis</div>';
-    h += '<div>Modelo</div>';
-    h += '<div>Actividad</div>';
-    h += '<div>Técnico</div>';
-    h += '<div class="planilla-firma-head">Firma / Estado</div>';
-    h += '</div>';
-    // Filas
-    registros.forEach(function(r) {
-      var isEjec = r.estado === 'ejecutada' || r.estado === 'ejecutado';
-      var procColor = PLANILLA_PROC_COLOR[r.proceso] || 'var(--tm)';
-      var mChasis = r.chasis || r.codigo_barras;
-      var mChasisDisplay = mChasis;
-      if (mChasis && mChasis.length > 6) {
-        var head = mChasis.substring(0, mChasis.length - 6);
-        var tail = mChasis.substring(mChasis.length - 6);
-        mChasisDisplay = '<span style="opacity:0.5">' + head + '</span><strong>' + tail + '</strong>';
-      }
-
-      h += '<div class="planilla-row">';
-      h += '<div class="planilla-code">' + r.codigo_barras + '</div>';
-      h += '<div class="planilla-chasis">' + mChasisDisplay + '</div>';
-      h += '<div class="planilla-modelo">' + (r.linea ? (r.linea + ' ' + (r.referencia || '')).trim() : '—') + '</div>';
-      h += '<div class="planilla-act"><span class="planilla-dot" style="background:' + procColor + '"></span>' + r.proceso + '</div>';
-      h += '<div class="planilla-tec">' + (r.tecnico || '—') + '</div>';
-      if (isEjec) {
-        h += '<div class="planilla-firma"><span class="planilla-tag-ejec">✓ Ejecutada ' + planillaFmtHora(r.fecha_ejecucion) + '</span></div>';
+    var chasisHtml = '—';
+    if (r.chasis) {
+      if (r.chasis.length > 6) {
+        var head = r.chasis.substring(0, r.chasis.length - 6);
+        var tail = r.chasis.substring(r.chasis.length - 6);
+        chasisHtml = '<span class="plnl-chasis-head">' + head + '</span><span class="plnl-chasis-tail">' + tail + '</span>';
       } else {
-        h += '<div class="planilla-firma planilla-firma-empty"></div>';
+        chasisHtml = '<span class="plnl-chasis-tail">' + r.chasis + '</span>';
       }
-      h += '</div>';
-    });
-    h += '</div>';
+    }
+    var ref = ((r.linea || '') + ' ' + (r.referencia || '')).trim() || '—';
 
-    // Footer del bloque (visible al imprimir)
-    h += '<div class="planilla-block-footer">';
-    h += '<div>Generado ' + new Date().toLocaleString('es-CO', { timeZone: 'America/Bogota' }) + ' · Centro de Operaciones v2</div>';
-    h += '<div>' + mLabel + ' · ' + motoTotal + ' motos · ' + registros.length + ' actividades</div>';
-    h += '</div>';
-    h += '</div>';
+    h += '<tr' + (isPlacaFirst ? ' class="plnl-placa-first"' : '') + '>';
+    h += '<td class="plnl-code">' + r.codigo_barras + '</td>';
+    h += '<td class="plnl-chasis">' + chasisHtml + '</td>';
+    h += '<td>' + ref + '</td>';
+    h += '<td>' + (r.color || '—') + '</td>';
+    h += '<td>' + (r.cliente || '—') + '</td>';
+    h += '<td><span class="plnl-proc-dot" style="background:' + procColor + '"></span>' + r.proceso + '</td>';
+    if (isEjec) {
+      h += '<td><span class="plnl-tag plnl-tag-ejec">Ejecutada</span></td>';
+      h += '<td class="plnl-tec">' + (r.tecnico || '—') + '</td>';
+      h += '<td class="plnl-tec">' + planillaFmtHora(r.fecha_ejecucion) + '</td>';
+    } else {
+      h += '<td><span class="plnl-tag plnl-tag-pend">Pendiente</span></td>';
+      h += '<td class="plnl-empty">—</td>';
+      h += '<td class="plnl-empty">—</td>';
+    }
+    h += '</tr>';
   });
+
+  h += '</tbody></table>';
+  h += '</div>';
 
   return h;
 }
 
-/* Sincronizar datos de Supabase + BD_Tramites */
+/* ============================================================
+   planillaSync — Cargar datos de Supabase + BD_Tramites
+   ============================================================ */
 function planillaSync() {
-  if (!supabaseReady()) {
+  if (typeof supabaseReady !== 'function' || !supabaseReady()) {
     toast('Supabase no configurado', 1);
     return;
   }
@@ -257,7 +304,7 @@ function planillaSync() {
       };
     });
 
-    // Merge: cada registro incluye datos de la moto
+    // Merge
     planillaData = registros.map(function(r) {
       var motoInfo = motoIndex[r.codigo_barras] || {};
       return {
@@ -269,7 +316,7 @@ function planillaSync() {
         estado: r.estado,
         fecha_programacion: r.fecha_programacion,
         fecha_ejecucion: r.fecha_ejecucion,
-        marca: motoInfo.marca || 'SIN_MARCA',
+        marca: motoInfo.marca || 'OTRA',
         linea: motoInfo.linea,
         referencia: motoInfo.referencia,
         chasis: motoInfo.chasis || r.codigo_barras,
@@ -279,15 +326,8 @@ function planillaSync() {
       };
     });
 
-    // Ordenar por marca, luego código_barras, luego proceso_orden
-    planillaData.sort(function(a, b) {
-      if (a.marca !== b.marca) return a.marca.localeCompare(b.marca);
-      if (a.codigo_barras !== b.codigo_barras) return a.codigo_barras.localeCompare(b.codigo_barras);
-      return a.proceso_orden - b.proceso_orden;
-    });
-
     planillaLoading = false;
-    toast('✓ Planilla cargada: ' + planillaData.length + ' actividades');
+    toast('✓ Planilla: ' + planillaData.length + ' actividades');
     render();
   }).catch(function(e) {
     planillaLoading = false;
