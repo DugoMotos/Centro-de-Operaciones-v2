@@ -1,12 +1,16 @@
 /* ============================================================
    ALISTAMIENTO.JS — Módulo de Servicio Técnico
    ============================================================
-   Registro de ejecución de alistamientos en Supabase.
-   
+   Consulta y registro de alistamientos en Supabase.
+
    Búsqueda inteligente:
-   - Si empieza con "DM" + números → busca por código de barras
-   - Si es alfanumérico → busca por últimos N dígitos del chasis
+   - "DM" + números → busca por código de barras directo en Supabase
+   - Cualquier otro alfanumérico → busca por últimos dígitos del chasis
      en BD_Tramites, resuelve a código_barras y consulta Supabase
+
+   Registro:
+   - Escribe la ejecución (estado + fecha + técnico) en Supabase
+     directamente en la tabla registro_alistamientos
    ============================================================ */
 
 /* ============================================================
@@ -34,8 +38,6 @@ function aBuscar() {
   aLoading = true;
   render();
 
-  // Detección automática: DM + números = código directo
-  //                       resto = chasis parcial → resolver en BD_Tramites
   var esCodigoDM = /^DM\d+$/.test(raw);
 
   var promesaCodigo;
@@ -61,13 +63,11 @@ function aBuscar() {
   }
 
   promesaCodigo.then(function(codigoBarras) {
-    // Buscar en Supabase con el código resuelto
     return apiRegAlistConsultar({ codigo: codigoBarras }).then(function(registros) {
       if (!registros || !registros.length) {
         throw new Error('SIN_ALISTAMIENTOS');
       }
 
-      // Adaptar shape para el render existente
       aRows = registros.map(function(r) {
         return {
           id: r.id,
@@ -86,7 +86,6 @@ function aBuscar() {
       aResp = '';
       aCmt = '';
 
-      // Consulta adicional a BD_Tramites para datos completos de la moto
       if (pCfg.tramC) {
         return apiTramConsultarMoto(codigoBarras).then(function(tramData) {
           var rows = tramData.value || tramData;
@@ -122,7 +121,19 @@ function aBuscar() {
 }
 
 /* ============================================================
-   aRegistrar — Marca actividad como ejecutada en Supabase
+   aElegir — Selecciona una actividad pendiente para registrar
+   ============================================================ */
+function aElegir(id) {
+  var row = aRows.find(function(r) { return r.id === id; });
+  if (row && row.estado === 'pendiente') {
+    aChosen = row;
+    aResp = '';
+    render();
+  }
+}
+
+/* ============================================================
+   aRegistrar — Marca la actividad como ejecutada en Supabase
    ============================================================ */
 function aRegistrar() {
   if (!aChosen) { toast('Seleccioná una actividad', 1); return; }
@@ -138,7 +149,6 @@ function aRegistrar() {
 
   apiRegAlistMarcarEjecutada(aChosen.id, aResp)
     .then(function() {
-      // Actualizar el estado local para reflejar el cambio inmediato
       var idx = aRows.findIndex(function(r) { return r.id === aChosen.id; });
       if (idx >= 0) {
         aRows[idx].estado = 'ejecutada';
@@ -194,7 +204,6 @@ function aRegView() {
     : 'linear-gradient(135deg,#712B13 0%,#993C1D 100%)';
   var marcaAccent = marca === 'HERO' ? '#5DCAA5' : '#F0997B';
 
-  // Destacar últimos 6 dígitos del chasis
   var mChasisDisplay = mChasis || '—';
   if (mChasis && mChasis.length > 6) {
     var head = mChasis.substring(0, mChasis.length - 6);
@@ -220,7 +229,6 @@ function aRegView() {
   h += '</div>';
   h += '</div>';
 
-  // Filtrar actividades pendientes vs ejecutadas
   var pendientes = aRows.filter(function(r) { return r.estado === 'pendiente'; });
   var ejecutadas = aRows.filter(function(r) { return r.estado === 'ejecutada' || r.estado === 'ejecutado'; });
 
@@ -253,7 +261,6 @@ function aRegView() {
     });
   }
 
-  // Formulario de registro (si hay una actividad seleccionada)
   if (aChosen) {
     h += '<div style="margin-top:14px;padding:14px;background:var(--bg);border:.5px solid var(--gn);border-radius:8px">';
     h += '<div class="lbl" style="color:var(--gnd);margin-bottom:8px">Registrar: ' + aChosen.proceso + '</div>';
@@ -261,10 +268,11 @@ function aRegView() {
     h += '<div style="margin-bottom:8px"><label class="lbl">Técnico que ejecutó</label>';
     h += '<select class="inp" onchange="aResp=this.value">';
     h += '<option value="">— Seleccionar —</option>';
-    var opts = (aChosen.proceso === 'Instalación GPS') ? RESP_GPS :
-               (aChosen.proceso === 'Marcación') ? RESP_MARCA :
-               (aChosen.proceso === 'Defensas') ? RESP_DEF :
-               RESP_ALIST;
+    var opts = (aChosen.proceso === 'Instalación GPS') ? (ALL_R.G || []) :
+               (aChosen.proceso === 'Marcación') ? (ALL_R.M || []) :
+               (aChosen.proceso === 'Defensas') ? (ALL_R.D || []) :
+               (aChosen.proceso === 'Instalación Placa') ? (ALL_R.P || []) :
+               (ALL_R.A || []);
     opts.forEach(function(o) {
       h += '<option value="' + o + '"' + (aResp === o ? ' selected' : '') + '>' + o + '</option>';
     });
@@ -279,18 +287,6 @@ function aRegView() {
   }
 
   return h;
-}
-
-/* ============================================================
-   aElegir — Selecciona una actividad de la lista
-   ============================================================ */
-function aElegir(id) {
-  var row = aRows.find(function(r) { return r.id === id; });
-  if (row && row.estado === 'pendiente') {
-    aChosen = row;
-    aResp = '';
-    render();
-  }
 }
 
 /* ============================================================
