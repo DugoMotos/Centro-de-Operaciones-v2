@@ -1,9 +1,9 @@
 /* ============================================================
-   LAYOUT.CSS — Estructura de la página
+   LAYOUT.CSS — Estructura de la página · Estilo Linear
    ============================================================
-   App grid, sidebar, mobile bar, área principal, responsive.
-   Aquí va todo lo que define el LAYOUT de la página, no los
-   componentes internos.
+   App grid, sidebar minimalista, mobile bar, área principal.
+   Rediseño ago 2026: paleta más contenida, tipografía más
+   condensada, badges neutrales, resaltado sutil del activo.
    ============================================================ */
 
 /* App container */
@@ -14,7 +14,7 @@
   background:var(--bg);
   min-height:100dvh;
   display:grid;
-  grid-template-columns:230px 1fr;
+  grid-template-columns:232px 1fr;
   border:none;
 }
 
@@ -46,85 +46,93 @@
 }
 
 /* ============================================================
-   SIDEBAR
+   SIDEBAR · Estilo Linear
    ============================================================ */
 .side{
-  background:var(--bg);
-  border-right:0.5px solid var(--bd);
-  padding:20px 0;
+  background:#0a0a0b;
+  border-right:0.5px solid #202024;
+  padding:14px 8px;
   overflow-y:auto;
   min-height:100dvh;
+  display:flex;
+  flex-direction:column;
 }
 
 .side-brand{
   display:flex;
   align-items:center;
   gap:10px;
-  padding:0 18px 18px;
-  border-bottom:0.5px solid var(--bd);
-  margin-bottom:14px;
+  padding:6px 10px 14px;
+  border-bottom:0.5px solid #1c1c20;
+  margin-bottom:8px;
 }
 .side-logo{
-  width:26px;
-  height:26px;
-  background:var(--rd);
-  border-radius:4px;
+  width:24px;
+  height:24px;
+  background:linear-gradient(135deg,#E24B4A,#A32D2D);
+  border-radius:5px;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:11px;
-  font-weight:500;
+  font-size:10px;
+  font-weight:700;
   color:white;
-  letter-spacing:0.5px;
+  letter-spacing:0.3px;
+  flex-shrink:0;
 }
 .side-name{
   font-size:13px;
-  font-weight:500;
-  letter-spacing:1px;
+  font-weight:600;
+  letter-spacing:-0.2px;
+  color:#eae9e5;
 }
 .side-sub{
-  font-size:10px;
-  color:#666;
-  letter-spacing:0.5px;
+  font-size:9px;
+  color:#5f5f66;
+  letter-spacing:1px;
   margin-left:auto;
+  text-transform:uppercase;
 }
 
 .side-group{
-  padding:14px 0 6px;
+  padding:6px 0 4px;
 }
 .side-group-title{
   font-size:9px;
-  color:var(--tl);
-  letter-spacing:2px;
-  padding:0 18px 8px;
+  color:#5f5f66;
+  letter-spacing:1.5px;
+  padding:8px 12px 4px;
   text-transform:uppercase;
+  font-weight:600;
 }
 
 .side-link{
   display:flex;
   align-items:center;
-  gap:10px;
-  padding:10px 18px;
-  font-size:13px;
-  color:#aaa;
+  gap:8px;
+  padding:5px 10px;
+  margin:1px 0;
+  font-size:12px;
+  color:#b4b4bb;
   cursor:pointer;
-  border-left:2px solid transparent;
-  transition:all 0.15s;
+  border-radius:5px;
+  transition:background 0.1s, color 0.1s;
   user-select:none;
 }
 .side-link:hover{
-  background:rgba(255,255,255,0.03);
-  color:#ddd;
+  background:rgba(255,255,255,0.04);
+  color:#eae9e5;
 }
 .side-link.on{
-  background:rgba(226,75,74,0.08);
-  color:white;
-  border-left-color:var(--rd);
+  background:rgba(94,106,210,0.12);
+  color:#B7BEEF;
   font-weight:500;
 }
 .side-link svg{
   flex-shrink:0;
   opacity:0.7;
+  width:14px;
+  height:14px;
 }
 .side-link.on svg{
   opacity:1;
@@ -132,23 +140,23 @@
 
 .side-chevron{
   margin-left:auto;
-  font-size:10px;
-  color:#666;
+  font-size:9px;
+  color:#5f5f66;
   transition:transform 0.2s;
 }
 .side-link.parent.expanded .side-chevron{
   transform:rotate(90deg);
-  color:#aaa;
+  color:#b4b4bb;
 }
 
 .side-badge{
   margin-left:auto;
-  font-size:10px;
-  background:var(--rd);
-  color:white;
-  padding:1px 8px;
-  border-radius:10px;
-  font-weight:500;
+  font-size:9px;
+  background:#26262b;
+  color:#999;
+  padding:1px 6px;
+  border-radius:8px;
+  font-weight:600;
   font-family:var(--fm);
 }
 .side-link.parent.expanded .side-badge{
@@ -156,7 +164,7 @@
   margin-right:8px;
 }
 
-/* Sub-navigation (sublinks under expandable parent) */
+/* Sub-navigation */
 .side-sub{
   max-height:0;
   overflow:hidden;
@@ -169,34 +177,36 @@
 .sublink{
   display:flex;
   align-items:center;
-  gap:10px;
-  padding:8px 18px 8px 44px;
+  gap:8px;
+  padding:5px 10px 5px 34px;
+  margin:1px 0;
   font-size:12px;
-  color:#888;
+  color:#8a8a92;
   cursor:pointer;
-  border-left:2px solid transparent;
-  transition:all 0.15s;
+  border-radius:5px;
+  transition:background 0.1s, color 0.1s;
   user-select:none;
 }
 .sublink:hover{
-  background:rgba(255,255,255,0.03);
-  color:#ccc;
+  background:rgba(255,255,255,0.04);
+  color:#eae9e5;
 }
 .sublink.on{
-  background:rgba(226,75,74,0.06);
-  color:var(--rdd);
-  border-left-color:#A32D2D;
+  background:rgba(94,106,210,0.10);
+  color:#B7BEEF;
   font-weight:500;
 }
 .sublink svg{
-  opacity:0.6;
+  opacity:0.5;
+  width:10px;
+  height:10px;
 }
 .sublink.on svg{
   opacity:1;
 }
 
 /* ============================================================
-   MOBILE BAR (visible solo en móvil)
+   MOBILE BAR
    ============================================================ */
 .mobile-bar{
   display:none;
@@ -280,19 +290,19 @@
     width:24px;
     height:24px;
     background:var(--rd);
-    border-radius:4px;
+    border-radius:5px;
     display:flex;
     align-items:center;
     justify-content:center;
     font-size:10px;
-    font-weight:500;
+    font-weight:700;
     color:white;
-    letter-spacing:0.5px;
+    letter-spacing:0.3px;
   }
   .mobile-title-name{
     font-size:13px;
-    font-weight:500;
-    letter-spacing:1px;
+    font-weight:600;
+    letter-spacing:-0.2px;
   }
   .main{
     padding:18px 16px;
