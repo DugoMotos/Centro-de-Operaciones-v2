@@ -223,3 +223,47 @@ function apiInvEscribirPlaca(codigoBarras, placa) {
     placa: placa
   });
 }
+/* ============================================================
+   apiRegAlistCrear — Crea N registros en registro_alistamientos
+   ============================================================
+   Insert masivo. Consulta primero los IDs de los procesos por
+   nombre. Todos se crean con estado='pendiente', tecnico_id=null,
+   fecha_programacion=ahora.
+
+   procesosNombres: array como ['Alistamiento', 'Marcación', 'GPS']
+   ============================================================ */
+function apiRegAlistCrear(codigo_barras, procesosNombres) {
+  if (!procesosNombres || !procesosNombres.length) {
+    return Promise.reject(new Error('Sin procesos a crear'));
+  }
+
+  // 1. Consultar los IDs de los procesos por nombre
+  var nombresQuery = procesosNombres.map(function(n) {
+    return '"' + n.replace(/"/g, '\\"') + '"';
+  }).join(',');
+  var pathProc = '/rest/v1/procesos_alistamiento' +
+                 '?select=id,nombre' +
+                 '&nombre=in.(' + nombresQuery + ')';
+
+  return apiSupabase('GET', pathProc).then(function(procesos) {
+    if (!procesos || !procesos.length) {
+      throw new Error('No se encontraron procesos con esos nombres');
+    }
+
+    var nowIso = new Date().toISOString();
+
+    // 2. Armar las filas a insertar
+    var filas = procesos.map(function(p) {
+      return {
+        codigo_barras: codigo_barras,
+        proceso_id: p.id,
+        tecnico_id: null,
+        fecha_programacion: nowIso,
+        estado: 'pendiente'
+      };
+    });
+
+    // 3. Insert masivo
+    return apiSupabase('POST', '/rest/v1/registro_alistamientos', filas);
+  });
+}
