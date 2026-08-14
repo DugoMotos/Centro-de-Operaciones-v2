@@ -103,6 +103,10 @@ var planFilterFecha = '';
 var planExpanded = {};
 var planUbicaciones = {};
 
+// Rango de fechas para histórico
+var planFechaDesde = '';
+var planFechaHasta = '';
+
 // Planilla diaria
 var planillaFecha = new Date().toISOString().substring(0, 10);
 var planillaFilterMarca = '';
