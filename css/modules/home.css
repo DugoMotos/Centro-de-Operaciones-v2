@@ -1,0 +1,293 @@
+/* ============================================================
+   HOME.CSS — Estilos de la pantalla de inicio
+   ============================================================ */
+
+.home-hello {
+  font-size: 12px;
+  color: #B7BEEF;
+  letter-spacing: 0.3px;
+  margin-bottom: 4px;
+}
+
+.home-title {
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+  color: var(--tx);
+}
+
+.home-sub {
+  font-size: 12px;
+  color: var(--tm);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+/* ── KPIs ─────────────────────────────────────────────── */
+.home-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.home-kpi {
+  background: var(--sf);
+  border: 0.5px solid var(--bd);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.home-kpi-label {
+  font-size: 10px;
+  color: var(--tm);
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.home-kpi-value {
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+  line-height: 1;
+  color: var(--tx);
+}
+
+.home-kpi-sub {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  margin-top: 8px;
+  color: var(--tm);
+}
+
+/* ── Accesos rápidos ─────────────────────────────────── */
+.home-section-label {
+  font-size: 12px;
+  color: var(--tm);
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.home-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.home-quick {
+  background: var(--sf);
+  border: 0.5px solid var(--bd);
+  border-radius: 8px;
+  padding: 14px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.15s;
+}
+
+.home-quick:hover {
+  border-color: #5E6AD2;
+  background: rgba(94,106,210,0.05);
+}
+
+.home-quick-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+.home-quick-icon.new { background: rgba(226,75,74,0.15); color: #F26F6E; }
+.home-quick-icon.search { background: rgba(94,106,210,0.15); color: #B7BEEF; }
+.home-quick-icon.register { background: rgba(34,197,94,0.15); color: #6EDA92; }
+.home-quick-icon.print { background: rgba(245,165,36,0.15); color: #F5C572; }
+
+.home-quick-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--tx);
+  line-height: 1.3;
+}
+
+.home-quick-hint {
+  font-size: 10px;
+  color: var(--tm);
+  margin-top: 2px;
+}
+
+/* ── Grid inferior: Alertas + Actividad ──────────────── */
+.home-lower {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.home-panel {
+  background: var(--sf);
+  border: 0.5px solid var(--bd);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.home-panel-head {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 0.5px solid var(--bd);
+}
+
+.home-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--tx);
+}
+
+.home-panel-count {
+  background: rgba(255,255,255,0.06);
+  padding: 1px 7px;
+  border-radius: 8px;
+  font-size: 10px;
+  color: var(--tm);
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.home-panel-link {
+  font-size: 11px;
+  color: #B7BEEF;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.home-panel-link:hover { text-decoration: underline; }
+
+/* Alertas */
+.home-alert {
+  display: grid;
+  grid-template-columns: 16px 70px 1fr 60px;
+  gap: 10px;
+  padding: 10px 16px;
+  align-items: center;
+  font-size: 12px;
+  border-bottom: 0.5px solid rgba(255,255,255,0.03);
+  cursor: pointer;
+}
+
+.home-alert:last-child { border-bottom: none; }
+.home-alert:hover { background: rgba(255,255,255,0.02); }
+
+.home-alert-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #F5A524;
+}
+
+.home-alert-dot.critical { background: var(--rd); }
+
+.home-alert-code {
+  font-family: var(--fm);
+  font-size: 11px;
+  color: #F26F6E;
+  font-weight: 600;
+}
+
+.home-alert-desc {
+  color: #b4b4bb;
+  font-size: 12px;
+}
+
+.home-alert-days {
+  text-align: right;
+  font-size: 11px;
+  color: #F5C572;
+  font-family: var(--fm);
+  font-weight: 600;
+}
+
+.home-alert-days.critical { color: #F26F6E; }
+
+/* Actividad reciente */
+.home-activity {
+  display: grid;
+  grid-template-columns: 26px 1fr 50px;
+  gap: 10px;
+  padding: 10px 16px;
+  align-items: center;
+  font-size: 12px;
+  border-bottom: 0.5px solid rgba(255,255,255,0.03);
+}
+
+.home-activity:last-child { border-bottom: none; }
+
+.home-activity-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.home-activity-desc {
+  color: #b4b4bb;
+  line-height: 1.4;
+}
+
+.home-activity-desc strong {
+  color: var(--tx);
+  font-weight: 500;
+}
+
+.home-activity-code {
+  font-family: var(--fm);
+  color: #F26F6E;
+  font-weight: 600;
+}
+
+.home-activity-time {
+  text-align: right;
+  font-size: 10px;
+  color: var(--tm);
+  font-family: var(--fm);
+}
+
+/* Empty state */
+.home-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--tm);
+  font-size: 11px;
+}
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 900px) {
+  .home-kpis, .home-quick-grid { grid-template-columns: repeat(2, 1fr); }
+  .home-lower { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 500px) {
+  .home-kpis, .home-quick-grid { grid-template-columns: 1fr; }
+  .home-title { font-size: 22px; }
+}
