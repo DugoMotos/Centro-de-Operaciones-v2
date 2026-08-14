@@ -226,7 +226,7 @@ var ALIST_OPTS = [
   { l: 'Alistamiento', v: 'Alistamiento' },
   { l: 'Marcación', v: 'Marcación' },
   { l: 'Instalación de defensas', v: 'Defensas' },
-  { l: 'Instalación de GPS', v: 'GPS' }
+  { l: 'Instalación de GPS', v: 'Instalación GPS' }
 ];
 
 /* ============================================================
