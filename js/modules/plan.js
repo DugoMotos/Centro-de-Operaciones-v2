@@ -332,18 +332,32 @@ function planToggle(code) {
 }
 
 function planSync() {
-  if (!pCfg.planC) { toast('URL de consulta no configurada', 1); return; }
   planLoading = true;
   render();
 
   Promise.all([
-    apiPlanConsultar('*'),
+    apiRegAlistConsultar(),
     pCfg.tramC ? apiTramListar() : Promise.resolve({ value: [] })
   ]).then(function(results) {
-    planData = results[0].value || results[0];
-    if (!Array.isArray(planData)) planData = [];
+    // 1. Adaptar registros de Supabase al formato que espera el render
+    var registros = results[0] || [];
+    if (!Array.isArray(registros)) registros = [];
 
-    // Indexar motos por código_barras desde BD_Tramites
+    planData = registros.map(function(r) {
+      return {
+        id: r.id,
+        codigo_barras: r.codigo_barras,
+        fecha: r.fecha_programacion,
+        fecha_ejecucion: r.fecha_ejecucion,
+        proceso: (r.proceso && r.proceso.nombre) || '—',
+        proceso_orden: (r.proceso && r.proceso.orden) || 0,
+        estado: r.estado,
+        ejecuto: (r.tecnico && r.tecnico.nombre_completo) || '',
+        responsable: (r.tecnico && r.tecnico.nombre_completo) || ''
+      };
+    });
+
+    // 2. Indexar motos desde BD_Tramites (igual que antes)
     var tramMotos = results[1].value || results[1] || [];
     if (!Array.isArray(tramMotos)) tramMotos = [];
     planUbicaciones = {};
@@ -360,6 +374,17 @@ function planSync() {
         referencia: m.referencia || m.REFERENCIA || m.Referencia || ''
       };
     });
+
+    planLoading = false;
+    planExpanded = {};
+    toast('✓ ' + planData.length + ' actividades / ' + tramMotos.length + ' motos');
+    render();
+  }).catch(function(e) {
+    planLoading = false;
+    toast('Error al cargar: ' + (e.message || 'desconocido'), 1);
+    render();
+  });
+}
 
     planLoading = false;
     planExpanded = {};
