@@ -1,125 +1,84 @@
 /* ============================================================
-   APP.JS — Punto de entrada de la aplicación
+   APP.JS — Orquestador principal de la aplicación
+   ============================================================
+   Funciones expuestas:
+   - setMain(m): cambia la sección activa
+   - render(): re-pinta el área principal según main
+   - toggleSide(): abre/cierra menú móvil
+   - toggleProcParent(): expande/colapsa menú procedimiento
+   - init(): inicializa el app
+
+   Este archivo se carga AL FINAL después de todos los módulos.
    ============================================================ */
 
 /* ============================================================
-   UTILIDADES BÁSICAS (deben cargarse antes de state.js)
+   setMain — Cambia la sección activa del app
    ============================================================ */
+function setMain(m) {
+  main = m;
+  document.querySelectorAll('.side-link').forEach(function(x) { x.classList.remove('on'); });
+  document.querySelectorAll('.sublink').forEach(function(x) { x.classList.remove('on'); });
 
-// LocalStorage helpers
-function ls(key) {
-  try {
-    var v = localStorage.getItem(key);
-    if (v === null) return null;
-    try { return JSON.parse(v); } catch(e) { return v; }
-  } catch(e) { return null; }
-}
-
-function sv(key, val) {
-  try {
-    var s = typeof val === 'string' ? val : JSON.stringify(val);
-    localStorage.setItem(key, s);
-  } catch(e) {}
-}
-
-// Query selector helper
-function qsa(selector) {
-  return Array.prototype.slice.call(document.querySelectorAll(selector));
-}
-
-// Storage keys
-var SK_PIN = 'dm_admin_pin';
-var SK_OVR = 'dm_url_overrides';
-var SK_P = 'dm_pmotos';
-var SK_A = 'dm_alist_recs';
-
-/* ============================================================
-   TITLE HELPERS
-   ============================================================ */
-
-var __TITLE = {
-  home:      { t: 'Inicio',            s: '' },
-  negocios:  { t: 'Negocios activos',  s: 'Ventas' },
-  proc:      { t: 'Trámites',          s: 'Procedimiento' },
-  alist:     { t: 'Alistamiento',      s: 'Servicio técnico' },
-  plan:      { t: 'Plan',              s: 'Servicio técnico' },
-  planilla:  { t: 'Planilla diaria',   s: 'Servicio técnico' },
-  config:    { t: 'Configuración',     s: 'Sistema' }
-};
-
-function __setTitle(sec) {
-  var meta = __TITLE[sec] || __TITLE.home;
-  document.title = 'Centro de Operaciones · ' + meta.t;
-}
-
-/* ============================================================
-   SIDEBAR TOGGLES
-   ============================================================ */
-
-function toggleProcParent() {
-  var p = document.getElementById('parentProc');
-  var s = document.getElementById('procSubs');
-  if (!p || !s) return;
-  var open = s.classList.toggle('open');
-  p.classList.toggle('expanded', open);
-}
-
-function toggleSideMobile() {
-  var s = document.querySelector('.side');
-  var o = document.getElementById('sideOverlay');
-  if (!s || !o) return;
-  var open = s.classList.toggle('open');
-  o.classList.toggle('show', open);
-}
-
-function closeSideMobile() {
-  var s = document.querySelector('.side');
-  var o = document.getElementById('sideOverlay');
-  if (!s || !o) return;
-  s.classList.remove('open');
-  o.classList.remove('show');
-}
-
-function __markActive(sec) {
-  document.querySelectorAll('.side-link, .sublink').forEach(function(el) {
-    el.classList.toggle('on', el.getAttribute('data-sec') === sec);
-  });
-}
-
-/* ============================================================
-   ROUTER
-   ============================================================ */
-
-function setMain(sec) {
-  if (!sec || !__TITLE[sec]) sec = 'home';
-  if (sec === main) return;
-  main = sec;
-  __setTitle(sec);
-  __markActive(sec);
-
-  if (sec === 'proc' || sec === 'config') {
+  var isSubProc = m === 'proc' || m === 'alist' || m === 'plan' || m === 'planilla';
+  if (isSubProc) {
     var p = document.getElementById('parentProc');
-    var s = document.getElementById('procSubs');
-    if (s && !s.classList.contains('open')) {
-      s.classList.add('open');
-      if (p) p.classList.add('expanded');
-    }
+    if (p) { p.classList.add('on', 'expanded'); }
+    var sp = document.getElementById('subProc');
+    if (sp) sp.classList.add('open');
+    var sl = document.querySelector('.sublink[data-sec="' + m + '"]');
+    if (sl) sl.classList.add('on');
+  } else {
+    var l = document.querySelector('.side-link[data-sec="' + m + '"]');
+    if (l) l.classList.add('on');
   }
 
-  if (window.innerWidth <= 768) closeSideMobile();
+  // En móvil, cerrar el menú al navegar
+  if (window.innerWidth <= 768) {
+    var s = document.getElementById('sideMenu');
+    var o = document.getElementById('sideOverlay');
+    if (s) s.classList.remove('open');
+    if (o) o.classList.remove('show');
+  }
   render();
 
-  if (sec === 'negocios' && negMotos === null && !negLoading) {
-    setTimeout(negSync, 0);
-  }
-  if (sec === 'plan' && planData === null && !planLoading) {
-    setTimeout(planSync, 0);
-  }
-  if (sec === 'planilla' && planillaData === null && !planillaLoading) {
+  // Auto-sync al entrar a Planilla
+  if (m === 'planilla' && planillaData === null && !planillaLoading) {
     setTimeout(planillaSync, 0);
   }
 }
 
+/* ============================================================
+   toggleProcParent — Expande/colapsa menú Procedimiento
+   ============================================================ */
+function toggleProcParent() {
+  var p = document.getElementById('parentProc');
+  var sp = document.getElementById('subProc');
+  if (!p || !sp) return;
+  var expanded = p.classList.contains('expanded');
+  if (expanded) {
+    p.classList.remove('expanded', 'on');
+    sp.classList.remove('open');
+  } else {
+    p.classList.add('expanded');
+    sp.classList.add('open');
+    setMain('proc');
+  }
+}
+
+/* ============================================================
+   toggleSide — Abre/cierra el sidebar en móvil
+   ============================================================ */
+function toggleSide() {
+  var s = document.getElementById('sideMenu');
+  var o = document.getElementById('sideOverlay');
+  if (!s) return;
+  s.classList.toggle('open');
+  if (o) o.classList.toggle('show');
+}
+
+/* ============================================================
+   render — Re-pinta el área principal según main
+   ============================================================ */
 function render() {
   var el = document.getElementById('c');
   if (!el) return;
@@ -133,43 +92,31 @@ function render() {
 }
 
 /* ============================================================
-   TOAST
+   init — Punto de entrada del app
+   ============================================================
+   Se llama cuando todo el DOM y los scripts están cargados.
+   Maneja errores en el render inicial.
    ============================================================ */
-
-function toast(msg, isError) {
-  var container = document.getElementById('toast-container');
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'toast-container';
-    document.body.appendChild(container);
+function init() {
+  try {
+    render();
+  } catch (e) {
+    var el = document.getElementById('c');
+    if (el) {
+      el.innerHTML = '<div style="text-align:center;padding:40px">' +
+        '<div style="font-size:28px;margin-bottom:10px">⚠️</div>' +
+        '<div style="font-size:14px;font-weight:600;margin-bottom:8px">Error al cargar</div>' +
+        '<div style="font-size:12px;color:var(--tm);margin-bottom:16px">' + e.message + '</div>' +
+        '<button class="btn btn-d" style="max-width:240px;margin:0 auto" onclick="localStorage.removeItem(SK_A);localStorage.removeItem(SK_P);location.reload()">Reiniciar datos y recargar</button>' +
+        '</div>';
+    }
+    console.error('Error en init:', e);
   }
-  var t = document.createElement('div');
-  t.className = 'toast' + (isError ? ' toast-error' : '');
-  t.textContent = msg;
-  container.appendChild(t);
-  setTimeout(function() {
-    t.classList.add('fade-out');
-    setTimeout(function() { t.remove(); }, 300);
-  }, 2500);
 }
 
-/* ============================================================
-   INIT
-   ============================================================ */
-
-document.addEventListener('DOMContentLoaded', function() {
-  __setTitle(main);
-  __markActive(main);
-  render();
-
-  // Auto-sync inicial si arrancamos en un módulo con datos remotos
-  if (main === 'negocios' && negMotos === null && !negLoading) {
-    setTimeout(negSync, 0);
-  }
-  if (main === 'plan' && planData === null && !planLoading) {
-    setTimeout(planSync, 0);
-  }
-  if (main === 'planilla' && planillaData === null && !planillaLoading) {
-    setTimeout(planillaSync, 0);
-  }
-});
+// Ejecutar init cuando el DOM esté listo
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
