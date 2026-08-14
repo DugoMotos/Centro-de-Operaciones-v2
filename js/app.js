@@ -77,7 +77,8 @@ function toggleSide() {
 function render() {
   var el = document.getElementById('c');
   if (!el) return;
-  if (main === 'alist') el.innerHTML = renderAlist();
+  if (main === 'home') el.innerHTML = renderHome();
+  else if (main === 'alist') el.innerHTML = renderAlist();
   else if (main === 'plan') el.innerHTML = renderPlan();
   else if (main === 'negocios') el.innerHTML = renderNegocios();
   else if (main === 'config') el.innerHTML = renderConfig();
