@@ -102,3 +102,11 @@ var planFilterEstado = '';
 var planFilterFecha = '';
 var planExpanded = {};
 var planUbicaciones = {};
+
+// Planilla diaria
+var planillaFecha = new Date().toISOString().substring(0, 10);
+var planillaFilterMarca = '';
+var planillaFilterProc = '';
+var planillaMostrarEjec = false;
+var planillaData = null;
+var planillaLoading = false;
