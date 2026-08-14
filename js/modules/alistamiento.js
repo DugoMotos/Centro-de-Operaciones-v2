@@ -268,11 +268,7 @@ function aRegView() {
     h += '<div style="margin-bottom:8px"><label class="lbl">Técnico que ejecutó</label>';
     h += '<select class="inp" onchange="aResp=this.value">';
     h += '<option value="">— Seleccionar —</option>';
-    var opts = (aChosen.proceso === 'Instalación GPS') ? (ALL_R.G || []) :
-               (aChosen.proceso === 'Marcación') ? (ALL_R.M || []) :
-               (aChosen.proceso === 'Defensas') ? (ALL_R.D || []) :
-               (aChosen.proceso === 'Instalación Placa') ? (ALL_R.P || []) :
-               (ALL_R.A || []);
+    var opts = ALL_R || [];
     opts.forEach(function(o) {
       h += '<option value="' + o + '"' + (aResp === o ? ' selected' : '') + '>' + o + '</option>';
     });
