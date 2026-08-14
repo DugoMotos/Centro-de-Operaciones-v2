@@ -273,17 +273,17 @@ function apiRegAlistCrear(codigo_barras, procesosNombres) {
    ============================================================
    Filtros opcionales:
    - codigo (string): un solo código de barras
-   - fecha (YYYY-MM-DD): solo registros de esa fecha
+   - fecha (YYYY-MM-DD): solo registros de esa fecha específica
+   - fechaDesde (YYYY-MM-DD): rango — desde esta fecha
+   - fechaHasta (YYYY-MM-DD): rango — hasta esta fecha
    - estado ('pendiente' | 'ejecutada'): filtra por estado
 
-   Devuelve array con proceso_nombre y tecnico_nombre ya resueltos
-   (usando embed de PostgREST)
+   Nota: si se pasa 'fecha', ignora 'fechaDesde/fechaHasta'
    ============================================================ */
 function apiRegAlistConsultar(opts) {
   opts = opts || {};
   var params = [];
 
-  // Select con embed (JOIN implícito de PostgREST)
   params.push('select=id,codigo_barras,estado,fecha_programacion,fecha_ejecucion,observaciones,created_at,updated_at,proceso:procesos_alistamiento(id,nombre,orden),tecnico:tecnicos_alistamiento(id,nombre_completo,tipo)');
 
   if (opts.codigo) {
@@ -292,10 +292,18 @@ function apiRegAlistConsultar(opts) {
   if (opts.estado) {
     params.push('estado=eq.' + encodeURIComponent(opts.estado));
   }
+
+  // Fecha única tiene prioridad sobre rango
   if (opts.fecha) {
-    // Rango del día completo
     params.push('fecha_programacion=gte.' + opts.fecha + 'T00:00:00');
     params.push('fecha_programacion=lte.' + opts.fecha + 'T23:59:59');
+  } else {
+    if (opts.fechaDesde) {
+      params.push('fecha_programacion=gte.' + opts.fechaDesde + 'T00:00:00');
+    }
+    if (opts.fechaHasta) {
+      params.push('fecha_programacion=lte.' + opts.fechaHasta + 'T23:59:59');
+    }
   }
 
   params.push('order=fecha_programacion.desc,created_at.desc');
