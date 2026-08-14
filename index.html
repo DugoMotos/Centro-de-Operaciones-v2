@@ -1,144 +1,168 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>Dugomotos — Operaciones</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Centro de Operaciones · Dugomotos v2</title>
 
-<!-- Google Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-
-<!-- ============================================================
-     CSS — Orden importa: base → layout → components → modules
-     ============================================================ -->
+<!-- Base -->
 <link rel="stylesheet" href="css/base.css">
+
+<!-- Layout -->
 <link rel="stylesheet" href="css/layout.css">
+
+<!-- Components -->
 <link rel="stylesheet" href="css/components.css">
+
+<!-- Modules -->
 <link rel="stylesheet" href="css/modules/negocios.css">
 <link rel="stylesheet" href="css/modules/procedimiento.css">
 <link rel="stylesheet" href="css/modules/alistamiento.css">
 <link rel="stylesheet" href="css/modules/plan.css">
 <link rel="stylesheet" href="css/modules/home.css">
+<link rel="stylesheet" href="css/modules/planilla.css">
 </head>
 <body>
 
-<!-- Overlay para cerrar el menú móvil al tocar fuera -->
-<div class="side-overlay" id="sideOverlay" onclick="toggleSide()"></div>
-
 <div class="app">
 
-  <!-- Mobile bar (visible solo en móvil) -->
-  <div class="mobile-bar">
-    <button class="mobile-burger" onclick="toggleSide()" aria-label="Menú">
-      <span></span><span></span><span></span>
-    </button>
-    <div class="mobile-title">
-      <div class="mobile-title-logo">DM</div>
-      <div class="mobile-title-name">DUGOMOTOS</div>
-    </div>
-  </div>
-
-  <!-- Sidebar -->
-  <aside class="side" id="sideMenu">
+  <!-- ============================================================
+       SIDEBAR
+       ============================================================ -->
+  <aside class="side">
     <div class="side-brand">
       <div class="side-logo">DM</div>
-      <div class="side-name">DUGOMOTOS</div>
-      <div class="side-sub">Intranet</div>
+      <div>
+        <div class="side-name">Dugomotos</div>
+        <div class="side-sub">v2</div>
+      </div>
     </div>
 
     <div class="side-group">
       <div class="side-group-title">Principal</div>
 
-<!-- Inicio -->
-<div class="side-link on" data-sec="home" onclick="setMain('home')">
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-    <path d="M3 9.5L12 3l9 6.5V21a1 1 0 01-1 1h-5v-7h-6v7H4a1 1 0 01-1-1V9.5z"/>
-  </svg>
-  Inicio
-</div>
-
-<!-- Negocios -->
-<div class="side-link" data-sec="negocios" onclick="setMain('negocios')">
+      <!-- Inicio -->
+      <div class="side-link on" data-sec="home" onclick="setMain('home')">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
+          <path d="M3 9.5L12 3l9 6.5V21a1 1 0 01-1 1h-5v-7h-6v7H4a1 1 0 01-1-1V9.5z"/>
         </svg>
-        Negocios
+        Inicio
       </div>
 
-      <!-- Procedimiento (expandible) -->
-      <div class="side-link parent expanded" id="parentProc" onclick="toggleProcParent()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-          <polyline points="14 2 14 8 20 8"/>
-          <line x1="9" y1="13" x2="15" y2="13"/>
-          <line x1="9" y1="17" x2="15" y2="17"/>
+      <!-- Negocios -->
+      <div class="side-link" data-sec="negocios" onclick="setMain('negocios')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M3 3v18h18"/>
+          <path d="M7 14l4-4 4 4 5-5"/>
         </svg>
-        Procedimiento
-        <span class="side-chevron">▸</span>
+        Negocios activos
       </div>
-      <div class="side-sub open" id="subProc">
+    </div>
+
+    <div class="side-group">
+      <div class="side-group-title">Procedimiento</div>
+
+      <!-- Trámites (parent) -->
+      <div class="side-link parent" id="parentProc" onclick="toggleProcParent()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M20 6L9 17l-5-5"/>
+        </svg>
+        Trámites
+        <span class="side-chevron">▶</span>
+      </div>
+
+      <div class="side-sub" id="procSubs">
         <div class="sublink" data-sec="proc" onclick="event.stopPropagation();setMain('proc')">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
             <circle cx="12" cy="12" r="3"/>
           </svg>
-          Trámites
+          Procedimiento
         </div>
-        <div class="sublink" data-sec="alist" onclick="event.stopPropagation();setMain('alist')">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div class="sublink" data-sec="config" onclick="event.stopPropagation();setMain('config')">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
             <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
           </svg>
-          Servicio Técnico
-        </div>
-        <div class="sublink" data-sec="plan" onclick="event.stopPropagation();setMain('plan')">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"/>
-          </svg>
-          Plan
+          Configuración
         </div>
       </div>
     </div>
 
     <div class="side-group">
-      <div class="side-group-title">Sistema</div>
-      <div class="side-link" data-sec="config" onclick="setMain('config')">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.6h.09A1.65 1.65 0 0010 3.09V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+      <div class="side-group-title">Servicio Técnico</div>
+
+      <!-- Alistamiento -->
+      <div class="side-link" data-sec="alist" onclick="setMain('alist')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M20 7L9 18l-5-5"/>
         </svg>
-        Configuración
+        Alistamiento
+      </div>
+
+      <!-- Plan de alistamientos -->
+      <div class="side-link" data-sec="plan" onclick="setMain('plan')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <rect x="3" y="4" width="18" height="16" rx="2"/>
+          <path d="M8 2v4M16 2v4M3 10h18"/>
+        </svg>
+        Plan de alistamientos
+      </div>
+
+      <!-- Planilla diaria -->
+      <div class="side-link" data-sec="planilla" onclick="setMain('planilla')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M9 2h6a2 2 0 012 2v2h2a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h2V4a2 2 0 012-2z"/>
+          <path d="M8 12h8M8 16h5"/>
+        </svg>
+        Planilla diaria
       </div>
     </div>
+
   </aside>
 
-  <!-- Main content area -->
+  <!-- ============================================================
+       MAIN CONTENT
+       ============================================================ -->
   <main class="main" id="c"></main>
+
 </div>
 
-<!-- Toast notification -->
-<div class="toast" id="toast"></div>
+<!-- Mobile bar -->
+<div class="mobile-bar">
+  <div class="mobile-burger" onclick="toggleSideMobile()">
+    <span></span><span></span><span></span>
+  </div>
+  <div class="mobile-title">
+    <div class="mobile-title-logo">DM</div>
+    <div class="mobile-title-name">Dugomotos v2</div>
+  </div>
+</div>
+
+<div class="side-overlay" id="sideOverlay" onclick="toggleSideMobile()"></div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
 
 <!-- ============================================================
-     JAVASCRIPT — Orden CRÍTICO: dependencias antes de uso
-     ============================================================
-     1. config.js     → URLs y getUrl() (no depende de nada)
-     2. data.js       → constantes (no depende de nada)
-     3. utils.js      → helpers (depende de config para SK_*)
-     4. state.js      → estado global (depende de config + utils)
-     5. api.js        → llamadas fetch (depende de config + utils)
-     6. modules/*.js  → módulos (dependen de los anteriores)
-     7. app.js        → orquestador (depende de TODO)
+     SCRIPTS
      ============================================================ -->
-<script src="js/config.js"></script>
+<!-- Data & config base -->
 <script src="js/data.js"></script>
-<script src="js/utils.js"></script>
+<script src="js/config.js"></script>
 <script src="js/state.js"></script>
+<script src="js/utils.js"></script>
 <script src="js/api.js"></script>
+
+<!-- Modules -->
 <script src="js/modules/negocios.js"></script>
 <script src="js/modules/procedimiento.js"></script>
 <script src="js/modules/alistamiento.js"></script>
 <script src="js/modules/plan.js"></script>
-<script src="js/modules/home.js"></script>
 <script src="js/modules/config.js"></script>
+<script src="js/modules/home.js"></script>
+<script src="js/modules/planilla.js"></script>
+
+<!-- App principal (router + init) -->
 <script src="js/app.js"></script>
 
 </body>
