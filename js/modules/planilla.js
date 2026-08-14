@@ -57,18 +57,20 @@ function planillaFmtFechaHora(iso) {
       timeZone: 'America/Bogota',
       day: '2-digit',
       month: '2-digit',
+      year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
       hour12: false
     }).formatToParts(d);
-    var dd = '', mm = '', hh = '', min = '';
+    var dd = '', mm = '', yy = '', hh = '', min = '';
     parts.forEach(function(p) {
       if (p.type === 'day') dd = p.value;
       else if (p.type === 'month') mm = p.value;
+      else if (p.type === 'year') yy = p.value;
       else if (p.type === 'hour') hh = p.value;
       else if (p.type === 'minute') min = p.value;
     });
-    return dd + '/' + mm + ' ' + hh + ':' + min;
+    return dd + '/' + mm + '/' + yy + ' ' + hh + ':' + min;
   } catch (e) { return ''; }
 }
 
