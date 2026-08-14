@@ -48,17 +48,27 @@ function planillaFmtFechaLarga(iso) {
 }
 
 /* Formatear hora */
-function planillaFmtHora(iso) {
+function planillaFmtFechaHora(iso) {
   if (!iso) return '';
   try {
     var d = new Date(iso);
     if (isNaN(d.getTime())) return '';
-    return new Intl.DateTimeFormat('es-CO', {
+    var parts = new Intl.DateTimeFormat('es-CO', {
       timeZone: 'America/Bogota',
+      day: '2-digit',
+      month: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
       hour12: false
-    }).format(d);
+    }).formatToParts(d);
+    var dd = '', mm = '', hh = '', min = '';
+    parts.forEach(function(p) {
+      if (p.type === 'day') dd = p.value;
+      else if (p.type === 'month') mm = p.value;
+      else if (p.type === 'hour') hh = p.value;
+      else if (p.type === 'minute') min = p.value;
+    });
+    return dd + '/' + mm + ' ' + hh + ':' + min;
   } catch (e) { return ''; }
 }
 
@@ -222,7 +232,7 @@ function planillaRenderBlock(marca) {
   h += '<th>Proceso</th>';
   h += '<th>Estado</th>';
   h += '<th>Ejecutó</th>';
-  h += '<th>Hora</th>';
+  h += '<th>Fecha ejec</th>';
   h += '</tr></thead><tbody>';
 
   filtered.forEach(function(r, idx) {
@@ -252,7 +262,7 @@ function planillaRenderBlock(marca) {
     if (isEjec) {
       h += '<td><span class="plnl-tag plnl-tag-ejec">Ejecutada</span></td>';
       h += '<td class="plnl-tec">' + (r.tecnico || '—') + '</td>';
-      h += '<td class="plnl-tec">' + planillaFmtHora(r.fecha_ejecucion) + '</td>';
+      h += '<td class="plnl-tec">' + planillaFmtFechaHora(r.fecha_ejecucion) + '</td>';
     } else {
       h += '<td><span class="plnl-tag plnl-tag-pend">Pendiente</span></td>';
       h += '<td class="plnl-empty">—</td>';
