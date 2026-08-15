@@ -115,7 +115,7 @@ function negSync() {
 
   Promise.all([
     apiTramListar(),
-    apiRegAvancesConsultar()
+    apiRegListar()
   ]).then(function(results) {
     var motosRaw = results[0].value || results[0] || [];
     if (!Array.isArray(motosRaw)) motosRaw = [];
