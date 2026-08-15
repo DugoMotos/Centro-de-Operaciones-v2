@@ -2,15 +2,7 @@
    PLAN.JS — Vista consolidada por moto de alistamientos
    ============================================================
    Muestra alistamientos programados desde Supabase agrupados
-   por moto (código_barras). Cada moto se expande para ver
-   sus procesos con estado y quién los ejecutó.
-
-   Consulta 2 fuentes en paralelo:
-   - Supabase (registro_alistamientos con JOIN procesos/técnicos)
-   - BD_Tramites (para obtener ubicación, marca, chasis real)
-
-   Rango de fechas: por defecto últimos 30 días (evita trae toda
-   la historia). Editable por el usuario en la toolbar.
+   por moto. Filtros por rango de fechas con presets rápidos.
    ============================================================ */
 
 /* Formatear fecha corta: dd/mm/aaaa */
@@ -22,7 +14,6 @@ function planFmtFecha(valor) {
       var p = valor.split('/');
       d = new Date(parseInt(p[2], 10), parseInt(p[1], 10) - 1, parseInt(p[0], 10));
     } else if (typeof valor === 'number') {
-      // Serial de Excel (número de días desde 1900)
       d = new Date((valor - 25569) * 86400 * 1000);
     } else {
       d = new Date(valor);
@@ -84,48 +75,137 @@ function planToggle(code) {
   render();
 }
 
+/* Presets rápidos de rango */
+function planSetPresetRango(preset) {
+  var hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  var hastaDate = new Date(hoy);
+  var desdeDate = new Date(hoy);
+
+  if (preset === 'hoy') {
+    // desde/hasta = hoy
+  } else if (preset === 'ayer') {
+    desdeDate.setDate(desdeDate.getDate() - 1);
+    hastaDate.setDate(hastaDate.getDate() - 1);
+  } else if (preset === '7d') {
+    desdeDate.setDate(desdeDate.getDate() - 6);
+  } else if (preset === '30d') {
+    desdeDate.setDate(desdeDate.getDate() - 29);
+  }
+
+  planFechaDesde = planIsoDate(desdeDate);
+  planFechaHasta = planIsoDate(hastaDate);
+  planSync();
+}
+
+/* Cambio de fecha "Desde": NO recarga, solo actualiza variable */
+function planSetFechaDesde(val) {
+  planFechaDesde = val;
+  // No sincroniza aún, espera a que HASTA esté completo o que se cambie HASTA
+  render();
+}
+
+/* Cambio de fecha "Hasta": SÍ recarga si ambas fechas están completas */
+function planSetFechaHasta(val) {
+  planFechaHasta = val;
+  if (planFechaDesde && planFechaHasta) {
+    planSync();
+  } else {
+    render();
+  }
+}
+
+/* Detectar qué preset está activo (para resaltar el botón) */
+function planPresetActivo() {
+  if (!planFechaDesde || !planFechaHasta) return '';
+  var hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  var hoyIso = planIsoDate(hoy);
+
+  if (planFechaDesde === hoyIso && planFechaHasta === hoyIso) return 'hoy';
+
+  var ayer = new Date(hoy);
+  ayer.setDate(ayer.getDate() - 1);
+  var ayerIso = planIsoDate(ayer);
+  if (planFechaDesde === ayerIso && planFechaHasta === ayerIso) return 'ayer';
+
+  var hace7 = new Date(hoy);
+  hace7.setDate(hace7.getDate() - 6);
+  if (planFechaDesde === planIsoDate(hace7) && planFechaHasta === hoyIso) return '7d';
+
+  var hace30 = new Date(hoy);
+  hace30.setDate(hace30.getDate() - 29);
+  if (planFechaDesde === planIsoDate(hace30) && planFechaHasta === hoyIso) return '30d';
+
+  return '';
+}
+
 /* ============================================================
    renderPlan — Vista principal del módulo
    ============================================================ */
 function renderPlan() {
   var h = '<div class="eyebrow">SERVICIO TÉCNICO</div><h1 class="h1">Plan de alistamientos</h1>';
 
-  // Subtítulo informativo con rango actual
+  // Subtítulo con rango actual
   var rangoTexto = '';
   if (planFechaDesde && planFechaHasta) {
-    rangoTexto = 'Desde ' + planFmtFecha(planFechaDesde) + ' hasta ' + planFmtFecha(planFechaHasta);
+    if (planFechaDesde === planFechaHasta) {
+      rangoTexto = planFmtFecha(planFechaDesde);
+    } else {
+      rangoTexto = 'Desde ' + planFmtFecha(planFechaDesde) + ' hasta ' + planFmtFecha(planFechaHasta);
+    }
   } else if (planFechaDesde) {
-    rangoTexto = 'Desde ' + planFmtFecha(planFechaDesde);
-  } else if (planFechaHasta) {
-    rangoTexto = 'Hasta ' + planFmtFecha(planFechaHasta);
+    rangoTexto = 'Desde ' + planFmtFecha(planFechaDesde) + ' (seleccioná "Hasta")';
   } else {
     rangoTexto = 'Últimos 30 días';
   }
   h += '<div class="sub-title">Vista consolidada por moto · ' + rangoTexto + '</div>';
 
   // ═══════════════════════════════════════════════════════
-  // TOOLBAR: rango fechas + filtros + acciones
+  // TOOLBAR: presets + rango + filtros + acciones
   // ═══════════════════════════════════════════════════════
-  h += '<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;align-items:center">';
 
-  // Rango de fechas
-  h += '<div style="display:flex;align-items:center;gap:4px;padding:4px 8px;background:rgba(255,255,255,0.02);border:0.5px solid var(--bd);border-radius:6px">';
-  h += '<span style="font-size:10px;color:var(--tm);letter-spacing:0.5px;text-transform:uppercase;font-weight:600;margin-right:4px">Desde</span>';
-  h += '<input type="date" class="inp" style="max-width:135px;height:28px;padding:2px 6px;font-size:11px" ' +
+  // Fila 1: presets rápidos
+  var presetActivo = planPresetActivo();
+  h += '<div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:center">';
+  h += '<span style="font-size:10px;color:var(--tm);letter-spacing:0.5px;text-transform:uppercase;font-weight:600;margin-right:4px">Rango:</span>';
+  var presets = [
+    { id: 'hoy', label: 'Hoy' },
+    { id: 'ayer', label: 'Ayer' },
+    { id: '7d', label: '7 días' },
+    { id: '30d', label: '30 días' }
+  ];
+  presets.forEach(function(p) {
+    var isActive = presetActivo === p.id;
+    var bg = isActive ? 'rgba(94,106,210,0.15)' : 'transparent';
+    var color = isActive ? '#B7BEEF' : 'var(--tm)';
+    var border = isActive ? '#5E6AD2' : 'var(--bd)';
+    h += '<button style="background:' + bg + ';color:' + color + ';border:0.5px solid ' + border + ';border-radius:5px;padding:4px 12px;font-size:11px;cursor:pointer;font-weight:500;font-family:inherit" ' +
+         'onclick="planSetPresetRango(\'' + p.id + '\')">' + p.label + '</button>';
+  });
+  h += '</div>';
+
+  // Fila 2: filtros
+  h += '<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;align-items:center">';
+
+  // Rango de fechas manual
+  h += '<div style="display:flex;align-items:center;gap:6px">';
+  h += '<span style="font-size:10px;color:var(--tm);letter-spacing:0.5px;text-transform:uppercase;font-weight:600">Desde</span>';
+  h += '<input type="date" class="inp" style="width:130px;height:32px;padding:4px 8px;font-size:11px" ' +
        'value="' + (planFechaDesde || '') + '" ' +
-       'onchange="planFechaDesde=this.value;planSync()">';
-  h += '<span style="font-size:10px;color:var(--tm);letter-spacing:0.5px;text-transform:uppercase;font-weight:600;margin:0 4px">Hasta</span>';
-  h += '<input type="date" class="inp" style="max-width:135px;height:28px;padding:2px 6px;font-size:11px" ' +
+       'onchange="planSetFechaDesde(this.value)">';
+  h += '<span style="font-size:10px;color:var(--tm);letter-spacing:0.5px;text-transform:uppercase;font-weight:600">Hasta</span>';
+  h += '<input type="date" class="inp" style="width:130px;height:32px;padding:4px 8px;font-size:11px" ' +
        'value="' + (planFechaHasta || '') + '" ' +
-       'onchange="planFechaHasta=this.value;planSync()">';
+       'onchange="planSetFechaHasta(this.value)">';
   if (planFechaDesde || planFechaHasta) {
-    h += '<button style="background:rgba(226,75,74,0.15);color:#F26F6E;border:none;border-radius:4px;width:22px;height:22px;cursor:pointer;font-size:14px;line-height:1;margin-left:4px" ' +
+    h += '<button style="background:rgba(226,75,74,0.15);color:#F26F6E;border:none;border-radius:4px;width:24px;height:24px;cursor:pointer;font-size:14px;line-height:1" ' +
          'title="Limpiar rango" ' +
          'onclick="planFechaDesde=\'\';planFechaHasta=\'\';planSync()">×</button>';
   }
   h += '</div>';
 
-  // Filtros
+  // Filtros (proceso, estado, buscador)
   var uniqueProcesos = [];
   var uniqueEstados = [];
   (planData || []).forEach(function(r) {
@@ -135,40 +215,38 @@ function renderPlan() {
   uniqueProcesos.sort();
   uniqueEstados.sort();
 
-  h += '<select class="inp" style="max-width:150px" onchange="planFilterProc=this.value;render()">' +
+  h += '<select class="inp" style="width:150px;height:32px;padding:4px 8px;font-size:11px" onchange="planFilterProc=this.value;render()">' +
        '<option value="">Todos los procesos</option>';
   uniqueProcesos.forEach(function(p) {
     h += '<option value="' + p + '"' + (planFilterProc === p ? ' selected' : '') + '>' + p + '</option>';
   });
   h += '</select>';
 
-  h += '<select class="inp" style="max-width:130px" onchange="planFilterEstado=this.value;render()">' +
+  h += '<select class="inp" style="width:130px;height:32px;padding:4px 8px;font-size:11px" onchange="planFilterEstado=this.value;render()">' +
        '<option value="">Todos los estados</option>';
   uniqueEstados.forEach(function(e) {
     h += '<option value="' + e + '"' + (planFilterEstado === e ? ' selected' : '') + '>' + e + '</option>';
   });
   h += '</select>';
 
-  // Buscador
-  h += '<input class="inp" style="max-width:200px" placeholder="Buscar código o proceso" ' +
+  h += '<input class="inp" style="width:180px;height:32px;padding:4px 8px;font-size:11px" ' +
+       'placeholder="Buscar código o proceso" ' +
        'value="' + (planFilter || '') + '" oninput="planFilter=this.value;render()">';
 
-  // Botón limpiar filtros
   if (planFilter || planFilterProc || planFilterEstado) {
-    h += '<button class="btn" style="width:auto;padding:0 12px;height:34px;font-size:11px" ' +
+    h += '<button class="btn" style="width:auto;padding:0 12px;height:32px;font-size:11px" ' +
          'onclick="planFilter=\'\';planFilterProc=\'\';planFilterEstado=\'\';render()">Limpiar filtros</button>';
   }
 
   h += '<div style="flex:1"></div>';
 
-  // Botón actualizar
-  h += '<button class="btn btn-p" style="width:auto;padding:0 14px;height:34px;font-size:12px" ' +
+  h += '<button class="btn btn-p" style="width:auto;padding:0 14px;height:32px;font-size:11px" ' +
        'onclick="planSync()">🔄 Actualizar</button>';
 
   h += '</div>';
 
   // ═══════════════════════════════════════════════════════
-  // ESTADOS: cargando / sin datos / con datos
+  // ESTADOS
   // ═══════════════════════════════════════════════════════
   if (planLoading) {
     h += '<div style="text-align:center;padding:40px"><div style="width:32px;height:32px;border:3px solid var(--bd);border-top-color:var(--gn);border-radius:50%;margin:0 auto;animation:spin 1s linear infinite"></div><div style="font-size:11px;color:var(--tm);margin-top:10px">Cargando plan de alistamientos...</div></div>';
@@ -201,15 +279,13 @@ function renderPlan() {
     return h;
   }
 
-  // Agrupar por moto (código_barras)
+  // Agrupar por moto
   var motos = {};
   filtered.forEach(function(r) {
     var code = r.codigo_barras;
     if (!motos[code]) motos[code] = [];
     motos[code].push(r);
   });
-
-  // Ordenar códigos alfabéticamente
   var codesOrdenados = Object.keys(motos).sort();
 
   // KPIs generales
@@ -226,7 +302,6 @@ function renderPlan() {
   h += '<div style="color:var(--tm)">Pendientes: <strong style="color:#F5C572">' + totalPendientes + '</strong></div>';
   h += '</div>';
 
-  // Renderizar cada moto
   codesOrdenados.forEach(function(code) {
     h += planRenderMotoCard(code, motos[code]);
   });
@@ -253,7 +328,6 @@ function planRenderMotoCard(code, actividades) {
 
   var expanded = !!planExpanded[code];
 
-  // Estilo del encabezado según marca
   var marcaBg = marca === 'HERO'
     ? 'linear-gradient(135deg,#085041 0%,#1D9E75 100%)'
     : marca === 'SYM'
@@ -262,17 +336,8 @@ function planRenderMotoCard(code, actividades) {
     ? 'linear-gradient(135deg,#1E3A8A 0%,#3B82F6 100%)'
     : 'linear-gradient(135deg,#4A4A4A 0%,#6B6B6B 100%)';
 
-  // Chasis con últimos 6 destacados
-  var chasisDisplay = chasis || code;
-  if (chasis && chasis.length > 6) {
-    var head = chasis.substring(0, chasis.length - 6);
-    var tail = chasis.substring(chasis.length - 6);
-    chasisDisplay = '<span style="opacity:0.5">' + head + '</span><strong style="color:#fff">' + tail + '</strong>';
-  }
-
   var h = '<div style="margin-bottom:10px;border:0.5px solid var(--bd);border-radius:8px;overflow:hidden;background:var(--sf)">';
 
-  // Encabezado clickeable
   h += '<div style="cursor:pointer" onclick="planToggle(\'' + code + '\')">';
   h += '<div style="background:' + marcaBg + ';padding:10px 14px;display:flex;align-items:center;justify-content:space-between">';
   h += '<div style="display:flex;align-items:center;gap:12px">';
@@ -287,16 +352,14 @@ function planRenderMotoCard(code, actividades) {
   h += '</div>';
   h += '</div>';
 
-  // Barra inferior con chasis y ubicación
+  // Barra inferior con chasis completo y ubicación
   h += '<div style="background:rgba(0,0,0,0.15);padding:6px 14px;display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.6)">';
-  h += '<div>Chasis: <span style="font-family:var(--fm)">' + chasisDisplay + '</span></div>';
+  h += '<div>Chasis: <span style="font-family:var(--fm);color:#fff">' + (chasis || code) + '</span></div>';
   if (ubicacion) h += '<div>📍 ' + ubicacion + '</div>';
   h += '</div>';
   h += '</div>';
 
-  // Actividades (expandido)
   if (expanded) {
-    // Ordenar por orden del proceso
     actividades.sort(function(a, b) {
       var oA = a.proceso_orden || 99;
       var oB = b.proceso_orden || 99;
@@ -313,7 +376,6 @@ function planRenderMotoCard(code, actividades) {
 
       h += '<div style="display:grid;grid-template-columns:1fr auto;gap:12px;padding:8px 0;border-bottom:0.5px solid rgba(255,255,255,0.04)">';
 
-      // Info del proceso
       h += '<div>';
       h += '<div style="display:flex;align-items:center;gap:8px">';
       h += '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + procColor + '"></span>';
@@ -321,7 +383,6 @@ function planRenderMotoCard(code, actividades) {
       h += '<span style="font-size:10px;padding:2px 6px;border-radius:3px;background:' + tagBg + ';color:' + tagColor + ';font-weight:600">' + tagText + '</span>';
       h += '</div>';
 
-      // Detalles
       var detalles = [];
       detalles.push('Programada: ' + planFmtFechaHora(r.fecha));
       if (isEjec) {
@@ -347,7 +408,6 @@ function planSync() {
   planLoading = true;
   render();
 
-  // Preparar rango de fechas
   var opts = {};
   if (planFechaDesde) opts.fechaDesde = planFechaDesde;
   if (planFechaHasta) opts.fechaHasta = planFechaHasta;
@@ -364,7 +424,6 @@ function planSync() {
     apiRegAlistConsultar(opts),
     pCfg.tramC ? apiTramListar() : Promise.resolve({ value: [] })
   ]).then(function(results) {
-    // 1. Adaptar registros de Supabase
     var registros = results[0] || [];
     if (!Array.isArray(registros)) registros = [];
 
@@ -382,7 +441,6 @@ function planSync() {
       };
     });
 
-    // 2. Indexar motos desde BD_Tramites
     var tramMotos = results[1].value || results[1] || [];
     if (!Array.isArray(tramMotos)) tramMotos = [];
     planUbicaciones = {};
