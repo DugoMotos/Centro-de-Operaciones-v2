@@ -148,6 +148,12 @@
   background:var(--orl);
   color:#F0997B;
 }
+
+.neg-mark.bajaj {
+  background: rgba(59,130,246,0.15);
+  color: #93C5FD;
+}
+
 .neg-mark.otra{
   background:rgba(255,255,255,0.06);
   color:#aaa;
