@@ -336,3 +336,19 @@ function apiRegAlistMarcarEjecutada(registroId, tecnicoNombre) {
 
   return apiSupabase('PATCH', '/rest/v1/registro_alistamientos?id=eq.' + registroId, body);
 }
+
+/* ============================================================
+   apiRegListar — Consulta registros de actividades con JOIN
+   ============================================================
+   Trae los registros de registro_actividades con el catálogo
+   embebido para tener el nombre del proceso y el responsable.
+   Usado por Negocios activos para calcular en qué actividad
+   está cada moto.
+   ============================================================ */
+function apiRegListar() {
+  var path = '/rest/v1/registro_actividades?' +
+    'select=id,codigo_barras,actividad_num,estado,fecha_programacion,fecha_ejecucion,responsable,ejecuto,observaciones,created_at,updated_at,' +
+    'catalogo:catalogo_actividades(actividad_num,nombre,responsable,tipo,orden)' +
+    '&order=created_at.desc';
+  return apiSupabase('GET', path);
+}
