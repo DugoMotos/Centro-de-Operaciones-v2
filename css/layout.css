@@ -174,36 +174,7 @@
   max-height:240px;
 }
 
-.sublink{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:5px 10px 5px 34px;
-  margin:1px 0;
-  font-size:12px;
-  color:#8a8a92;
-  cursor:pointer;
-  border-radius:5px;
-  transition:background 0.1s, color 0.1s;
-  user-select:none;
-}
-.sublink:hover{
-  background:rgba(255,255,255,0.04);
-  color:#eae9e5;
-}
-.sublink.on{
-  background:rgba(94,106,210,0.10);
-  color:#B7BEEF;
-  font-weight:500;
-}
-.sublink svg{
-  opacity:0.5;
-  width:10px;
-  height:10px;
-}
-.sublink.on svg{
-  opacity:1;
-}
+
 
 /* ============================================================
    MOBILE BAR
