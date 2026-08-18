@@ -72,21 +72,10 @@
 /* Columnas (grid) */
 .neg-cols{
   display:grid;
-  grid-template-columns:
-    max-content   /* Código */
-    max-content   /* Fecha venta */
-    max-content   /* Marca */
-    max-content   /* Referencia */
-    minmax(140px, 220px)  /* Cliente — corta con … si es muy largo */
-    max-content   /* Asesor */
-    max-content   /* Proceso actual */
-    max-content   /* Área */
-    72px          /* Avance */
-    40px;         /* Días */
+  grid-template-columns:repeat(10, max-content);
   gap:14px;
   align-items:center;
   width:max-content;
-  min-width:100%;
 }
 
 /* Encabezados */
@@ -141,9 +130,6 @@
 .neg-cell{
   font-size:13px;
   white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  min-width:0;
 }
 .neg-fecha{
   font-family:var(--fm);
