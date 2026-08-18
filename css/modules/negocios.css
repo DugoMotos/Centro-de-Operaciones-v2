@@ -72,10 +72,20 @@
 /* Columnas (grid) */
 .neg-cols{
   display:grid;
-  grid-template-columns:90px 100px 70px 160px 180px 150px 170px 100px 130px 60px;
-  gap:10px;
+  grid-template-columns:
+    auto      /* Código */
+    auto      /* Fecha venta */
+    auto      /* Marca */
+    minmax(120px, max-content)  /* Referencia */
+    minmax(140px, max-content)  /* Cliente */
+    minmax(120px, max-content)  /* Asesor */
+    minmax(200px, 1fr)          /* Proceso actual — toma lo sobrante */
+    auto      /* Área */
+    88px      /* Avance — compacto */
+    44px;     /* Días — angosto */
+  gap:12px;
   align-items:center;
-  min-width:1180px;
+  min-width:1080px;
 }
 
 /* Encabezados */
