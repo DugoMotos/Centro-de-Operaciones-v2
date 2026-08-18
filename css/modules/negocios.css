@@ -73,19 +73,20 @@
 .neg-cols{
   display:grid;
   grid-template-columns:
-    auto      /* Código */
-    auto      /* Fecha venta */
-    auto      /* Marca */
-    minmax(120px, max-content)  /* Referencia */
-    minmax(140px, max-content)  /* Cliente */
-    minmax(120px, max-content)  /* Asesor */
-    minmax(200px, 1fr)          /* Proceso actual — toma lo sobrante */
-    auto      /* Área */
-    88px      /* Avance — compacto */
-    44px;     /* Días — angosto */
-  gap:12px;
+    max-content   /* Código */
+    max-content   /* Fecha venta */
+    max-content   /* Marca */
+    max-content   /* Referencia */
+    minmax(140px, 220px)  /* Cliente — corta con … si es muy largo */
+    max-content   /* Asesor */
+    max-content   /* Proceso actual */
+    max-content   /* Área */
+    72px          /* Avance */
+    40px;         /* Días */
+  gap:14px;
   align-items:center;
-  min-width:1080px;
+  width:max-content;
+  min-width:100%;
 }
 
 /* Encabezados */
