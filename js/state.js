@@ -38,7 +38,8 @@ var pCfg = {
   get contC() { return getUrl('contC'); },
   get contW() { return getUrl('contW'); },
   get planC() { return getUrl('planC'); },
-  get planW() { return getUrl('planW'); }
+  get planW() { return getUrl('planW'); },
+   get invW() { return getUrl('invW'); }
 };
 
 /* ============================================================
