@@ -3,6 +3,13 @@
    ============================================================
    Tabla de motos con filtros, ordenamiento, progress bars,
    tags de actividad en curso, badges de marca.
+
+   Construida con <table> HTML nativa:
+   - Cada columna toma el ancho de su celda más larga
+   - Una sola línea por celda (nombres largos NO se parten)
+   - Scroll horizontal cuando no cabe en pantalla
+   - Header fijo (sticky) al hacer scroll vertical
+   - Columna Código fija (sticky) al hacer scroll horizontal
    ============================================================ */
 
 /* Filtros desplegables */
@@ -44,24 +51,37 @@
 }
 .neg-select:focus{border-color:var(--rd)}
 
-/* Tabla */
+/* ============================================================
+   CONTENEDOR DE LA TABLA
+   ============================================================
+   El scroll (horizontal y vertical) vive acá.
+   overflow:auto activa ambos scrolls cuando el contenido no cabe.
+   max-height limita la altura para que el header sticky tenga
+   contra qué "pegarse".
+   ============================================================ */
 .neg-table{
   border:0.5px solid var(--bd);
   border-radius:8px;
-  overflow-x:auto;
-  overflow-y:hidden;
   margin-top:14px;
+  overflow:auto;
+  max-height:calc(100vh - 240px);
   -webkit-overflow-scrolling:touch;
 }
+
+/* Barra superior con el conteo de negocios */
 .neg-table-bar{
   display:flex;
   align-items:center;
   justify-content:space-between;
   padding:12px 18px;
   border-bottom:0.5px solid var(--bd);
-  background:rgba(255,255,255,0.015);
+  background:var(--bg);
   gap:10px;
   flex-wrap:wrap;
+  position:sticky;
+  top:0;
+  left:0;
+  z-index:5;
 }
 .neg-table-count{
   font-size:10px;
@@ -69,57 +89,113 @@
   letter-spacing:1.5px;
 }
 
-/* Columnas (grid) */
-.neg-cols{
-  display:grid;
-  grid-template-columns:repeat(10, max-content);
-  gap:14px;
-  align-items:center;
+/* ============================================================
+   TABLA HTML NATIVA
+   ============================================================
+   border-collapse:separate + border-spacing:0 permite que el
+   position:sticky funcione bien en thead y en la primera columna.
+   width:max-content hace que la tabla ocupe exactamente lo que
+   suman sus columnas (cada una al ancho de su contenido).
+   ============================================================ */
+.neg-tbl{
+  border-collapse:separate;
+  border-spacing:0;
   width:max-content;
+  min-width:100%;
+  font-size:13px;
 }
 
-/* Encabezados */
-.neg-table-head{
-  padding:11px 18px;
+/* ── Encabezado ─────────────────────────────────────────────
+   position:sticky + top:44px lo mantiene visible al hacer
+   scroll vertical (44px es la altura aprox. de neg-table-bar).
+   ─────────────────────────────────────────────────────────── */
+.neg-tbl thead th{
+  position:sticky;
+  top:44px;
+  z-index:4;
+  background:#131315;
+  padding:11px 14px;
   font-size:9px;
   color:#777;
   letter-spacing:1.5px;
+  text-transform:uppercase;
+  text-align:left;
+  white-space:nowrap;
   border-bottom:0.5px solid var(--bd);
-}
-.neg-th{
   cursor:pointer;
   user-select:none;
-  display:flex;
-  align-items:center;
-  gap:4px;
   transition:color 0.15s;
 }
-.neg-th:hover{color:#ccc}
-.neg-th.active{color:var(--rdd)}
-.neg-th.right{justify-content:flex-end}
+.neg-tbl thead th:hover{color:#ccc}
+.neg-tbl thead th.active{color:var(--rdd)}
+.neg-tbl thead th.right{text-align:right}
+
+/* Flechas de ordenamiento */
+.neg-th-inner{
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+}
+.neg-th.right .neg-th-inner{
+  flex-direction:row-reverse;
+}
 .neg-th-arrow{
   font-size:8px;
   line-height:1;
   display:inline-flex;
   flex-direction:column;
   color:#444;
-  margin-left:2px;
 }
 .neg-th-arrow span{line-height:0.8}
 .neg-th-arrow .up.on,
 .neg-th-arrow .dn.on{color:var(--rdd)}
 
-/* Filas */
-.neg-row{
-  padding:13px 18px;
-  border-bottom:0.5px solid rgba(255,255,255,0.04);
+/* ── Filas ──────────────────────────────────────────────── */
+.neg-tbl tbody tr{
   cursor:pointer;
   transition:background 0.1s;
 }
-.neg-row:last-child{border-bottom:none}
-.neg-row:hover{background:rgba(226,75,74,0.04)}
+.neg-tbl tbody tr:hover{background:rgba(226,75,74,0.04)}
+.neg-tbl tbody tr:hover td{background:rgba(226,75,74,0.04)}
 
-/* Código de barras */
+.neg-tbl tbody td{
+  padding:13px 14px;
+  border-bottom:0.5px solid rgba(255,255,255,0.04);
+  white-space:nowrap;
+  vertical-align:middle;
+  background:var(--bg);
+}
+.neg-tbl tbody tr:last-child td{border-bottom:none}
+
+/* ── Columna CÓDIGO fija a la izquierda ─────────────────────
+   position:sticky + left:0 la mantiene visible al hacer scroll
+   horizontal. z-index mayor en el header de esa columna para
+   que quede por encima de todo en la esquina.
+   ─────────────────────────────────────────────────────────── */
+.neg-tbl thead th.neg-sticky-col{
+  position:sticky;
+  left:0;
+  z-index:6;
+}
+.neg-tbl tbody td.neg-sticky-col{
+  position:sticky;
+  left:0;
+  z-index:3;
+  border-right:0.5px solid var(--bd);
+}
+/* Sombra sutil en el borde de la columna fija para dar profundidad */
+.neg-tbl .neg-sticky-col::after{
+  content:'';
+  position:absolute;
+  top:0;
+  right:-6px;
+  bottom:0;
+  width:6px;
+  pointer-events:none;
+  background:linear-gradient(to right, rgba(0,0,0,0.15), transparent);
+}
+
+/* Código de barras (contenido de la celda fija) */
 .neg-code{
   font-family:var(--fm);
   font-size:13px;
@@ -127,10 +203,7 @@
   font-weight:500;
 }
 
-.neg-cell{
-  font-size:13px;
-  white-space:nowrap;
-}
+/* Fecha */
 .neg-fecha{
   font-family:var(--fm);
   font-size:11px;
@@ -144,7 +217,6 @@
   padding:3px 7px;
   border-radius:3px;
   display:inline-block;
-  margin-top:3px;
 }
 .neg-mark.hero{
   background:var(--gnl);
@@ -154,18 +226,16 @@
   background:var(--orl);
   color:#F0997B;
 }
-
-.neg-mark.bajaj {
-  background: rgba(59,130,246,0.15);
-  color: #93C5FD;
+.neg-mark.bajaj{
+  background:rgba(59,130,246,0.15);
+  color:#93C5FD;
 }
-
 .neg-mark.otra{
   background:rgba(255,255,255,0.06);
   color:#aaa;
 }
 
-/* Tag de actividad en curso */
+/* Tag de actividad en curso — SIN truncado, ancho natural */
 .neg-tag{
   display:inline-block;
   padding:4px 10px;
@@ -173,9 +243,6 @@
   font-size:11px;
   border:0.5px solid;
   white-space:nowrap;
-  max-width:200px;
-  overflow:hidden;
-  text-overflow:ellipsis;
 }
 .neg-tag-warn{
   background:var(--yll);
@@ -208,11 +275,18 @@
   border-color:rgba(255,255,255,0.1);
 }
 
-/* Progress bar */
+/* Área */
+.neg-area{
+  font-size:12px;
+  color:var(--tm);
+}
+
+/* Progress bar — ancho fijo compacto */
 .neg-progress{
   display:flex;
   align-items:center;
   gap:10px;
+  width:120px;
 }
 .neg-progress-bar{
   flex:1;
@@ -229,12 +303,17 @@
 .neg-progress-pct{
   font-size:11px;
   font-family:var(--fm);
-  min-width:36px;
+  min-width:34px;
   text-align:right;
   font-weight:500;
 }
 
 /* Días en proceso */
+.neg-dias-cell{
+  text-align:right;
+  font-family:var(--fm);
+  font-size:13px;
+}
 .neg-days-warn{
   color:var(--yl);
   font-weight:500;
@@ -244,44 +323,25 @@
   font-weight:500;
 }
 
-/* Comentario */
-.neg-comment-icon{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  width:24px;
-  height:24px;
-  border-radius:50%;
-  cursor:pointer;
-  background:var(--yll);
-  border:0.5px solid #BA7517;
-  color:var(--yl);
-  flex-shrink:0;
-  margin-left:8px;
-  position:relative;
-}
-.neg-comment-icon:hover{
-  background:rgba(186,117,23,0.3);
-}
-.neg-comment-dot{
-  position:absolute;
-  top:-2px;
-  right:-2px;
-  width:8px;
-  height:8px;
-  background:var(--rd);
-  border-radius:50%;
-  border:1.5px solid var(--bg);
-}
-.neg-comment-spacer{
-  display:inline-block;
-  width:32px;
+/* Estado vacío */
+.neg-empty{
+  padding:40px 20px;
+  text-align:center;
+  color:#666;
+  font-size:12px;
 }
 
 /* ============================================================
    RESPONSIVE
+   ============================================================
+   En móvil NO ocultamos columnas: el usuario hace scroll
+   horizontal para ver todo. Solo ajustamos los filtros para
+   que se apilen verticalmente y ocupen todo el ancho.
    ============================================================ */
 @media(max-width:900px){
+  .neg-table{
+    max-height:calc(100vh - 200px);
+  }
   .neg-table-bar{padding:10px 14px}
   .neg-table-bar input{
     width:100%!important;
@@ -297,14 +357,4 @@
     width:100%;
     min-width:0;
   }
-}
-  /* Ocultar Marca (3), Referencia (4), Asesor (6) y Área (8) en móvil chico */
-  .neg-table-head>div:nth-child(3),
-  .neg-cols>div:nth-child(3),
-  .neg-table-head>div:nth-child(4),
-  .neg-cols>div:nth-child(4),
-  .neg-table-head>div:nth-child(6),
-  .neg-cols>div:nth-child(6),
-  .neg-table-head>div:nth-child(8),
-  .neg-cols>div:nth-child(8){display:none}
 }
