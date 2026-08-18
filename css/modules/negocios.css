@@ -48,8 +48,10 @@
 .neg-table{
   border:0.5px solid var(--bd);
   border-radius:8px;
-  overflow:hidden;
+  overflow-x:auto;
+  overflow-y:hidden;
   margin-top:14px;
+  -webkit-overflow-scrolling:touch;
 }
 .neg-table-bar{
   display:flex;
@@ -70,9 +72,10 @@
 /* Columnas (grid) */
 .neg-cols{
   display:grid;
-  grid-template-columns:90px 100px 70px 1.2fr 1.4fr 1.1fr 1.3fr 100px 130px 60px;
+  grid-template-columns:90px 100px 70px 160px 180px 150px 170px 100px 130px 60px;
   gap:10px;
   align-items:center;
+  min-width:1180px;
 }
 
 /* Encabezados */
@@ -124,7 +127,13 @@
   font-weight:500;
 }
 
-.neg-cell{font-size:13px}
+.neg-cell{
+  font-size:13px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  min-width:0;
+}
 .neg-fecha{
   font-family:var(--fm);
   font-size:11px;
@@ -276,17 +285,6 @@
    RESPONSIVE
    ============================================================ */
 @media(max-width:900px){
-  .neg-cols{
-    grid-template-columns:80px 90px 60px 1.1fr 1.2fr 0.9fr 1.1fr 90px 100px 50px;
-    gap:7px;
-  }
-}
-
-@media(max-width:768px){
-  .neg-cols{
-    grid-template-columns:70px 80px 60px 1fr 1.1fr 0.9fr 1.1fr 80px 90px 40px;
-    gap:5px;
-  }
   .neg-table-bar{padding:10px 14px}
   .neg-table-bar input{
     width:100%!important;
@@ -302,18 +300,7 @@
     width:100%;
     min-width:0;
   }
-  .neg-cell{font-size:12px}
-  .neg-mark{
-    font-size:8px;
-    padding:2px 5px;
-  }
 }
-
-@media(max-width:480px){
-  .neg-cols{
-    grid-template-columns:60px 70px 50px 1fr 90px 90px 40px;
-    gap:5px;
-  }
   /* Ocultar Marca (3), Referencia (4), Asesor (6) y Área (8) en móvil chico */
   .neg-table-head>div:nth-child(3),
   .neg-cols>div:nth-child(3),
