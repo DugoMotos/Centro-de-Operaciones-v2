@@ -365,6 +365,42 @@ function pTrackView() {
             h += '<div style="margin-top:6px;padding:6px 10px;border-radius:6px;background:var(--gnl);border:.5px solid var(--gn)"><div style="font-size:10px;font-weight:600;color:var(--gnd)">✓ Placa programada en alistamientos</div></div>';
           }
 
+                     // ── Actividad #8 "Confirmar placa": input especial ──
+          if (step.actNum === 8) {
+            var placasHist = (md.info && md.info.placas) || [];
+            var placaActual = placasHist[placasHist.length - 1] || '';
+
+            if (isChecked) {
+              // Ya ejecutada: solo lectura + historial si aplica
+              h += '<div style="margin-top:8px;padding:8px 10px;border-radius:6px;background:var(--gnl);border:.5px solid var(--gn)">';
+              h += '<div style="font-size:9px;font-weight:700;color:var(--gnd);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Placa confirmada</div>';
+              h += '<div style="font-family:var(--fm);font-size:16px;font-weight:700;color:var(--gnd);letter-spacing:2px">' + (placaActual || '—') + '</div>';
+              if (placasHist.length > 1) {
+                var previas = placasHist.slice(0, -1);
+                h += '<div style="font-size:9px;color:var(--tm);margin-top:4px">Anteriores: ' + previas.join(', ') + '</div>';
+              }
+              h += '</div>';
+            } else {
+              // Pendiente: input + botón
+              h += '<div style="margin-top:8px;padding:10px;border-radius:6px;background:var(--vll);border:.5px solid var(--vlb)">';
+              h += '<div style="font-size:9px;font-weight:700;color:var(--vl);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Ingresar placa asignada</div>';
+
+              if (placaActual) {
+                h += '<div style="font-size:10px;color:var(--tm);margin-bottom:6px">Actual: <span style="font-family:var(--fm);font-weight:700;color:var(--tx);letter-spacing:1px">' + placaActual + '</span></div>';
+              }
+
+              h += '<input id="pPlacaInput" class="inp" style="font-family:var(--fm);font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:3px;text-align:center;padding:10px" maxlength="6" placeholder="ABC12D" value="" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key===\'Enter\')pConfirmPlaca()">';
+              h += '<div style="font-size:9px;color:var(--vl);margin-top:4px;margin-bottom:8px">Formato: 3 letras + 2 números + 1 letra</div>';
+              h += '<button id="pPlacaBtn" class="btn btn-p" style="font-size:12px;padding:9px" onclick="event.stopPropagation();pConfirmPlaca()">Confirmar placa</button>';
+
+              if (placasHist.length > 0) {
+                h += '<div style="font-size:9px;color:var(--tm);margin-top:6px">Histórico: ' + placasHist.join(', ') + '</div>';
+              }
+
+              h += '</div>';
+            }
+          }
+
           if (isChecked) h += '<div style="margin-top:4px;font-size:9px;color:var(--gn)">✓ Completado</div>';
 
           h += '</div></div>';
@@ -449,12 +485,19 @@ function pBuscar() {
     }
     pMotos[code].checks = pMotos[code].checks || {};
     pMotos[code].steps = pMotos[code].steps || {};
+        var placaExistente = (row.placa || '').toString().trim().toUpperCase();
+    var placasPrev = (pMotos[code].info && pMotos[code].info.placas) || [];
+    // Si BD_Tramites tiene placa y no está en el histórico local, agregarla
+    if (placaExistente && placasPrev.indexOf(placaExistente) < 0) {
+      placasPrev.push(placaExistente);
+    }
     pMotos[code].info = {
       marca: row.marca || row.MARCA || row.Marca || '',
       linea: row.linea || row.LINEA || row.Linea || '',
       referencia: row.referencia || row.REFERENCIA || row.Referencia || '',
       modelo: row.modelo || row.MODELO || row.Modelo || '',
-      color: row.color || row.COLOR || row.Color || ''
+      color: row.color || row.COLOR || row.Color || '',
+      placas: placasPrev
     };
     var colMap = {
       'manifiesto': 's03', 'asig_placa': 's04a', 'cot_datapro': 's05',
@@ -716,4 +759,57 @@ function pToggleAll() {
   var allOpen = days.every(function(d) { return pOpenDays[d]; });
   days.forEach(function(d) { pOpenDays[d] = !allOpen; });
   render();
+}
+
+/* ============================================================
+   pConfirmPlaca — Valida y escribe placa en BD_Inv
+   ============================================================
+   Formato colombiano moto: 3 letras + 2 números + letra (ABC12D)
+   - Valida formato
+   - Escribe placa en BD_Inv via flow (apiInvEscribirPlaca)
+   - Actualiza historial local en md.info.placas
+   - NO marca la actividad #8 como ejecutada
+     (el usuario debe hacer check aparte, según requerimiento)
+   ============================================================ */
+function pConfirmPlaca() {
+  var input = document.getElementById('pPlacaInput');
+  if (!input) return;
+  var placa = (input.value || '').trim().toUpperCase();
+
+  // Validar formato colombiano moto: ABC12D
+  var regex = /^[A-Z]{3}\d{2}[A-Z]$/;
+  if (!regex.test(placa)) {
+    toast('Formato inválido. Debe ser ABC12D (3 letras + 2 números + 1 letra)', 1);
+    return;
+  }
+
+  // Verificar si ya es la misma
+  var md = pMotos[pActive];
+  if (!md.info) md.info = {};
+  if (!md.info.placas) md.info.placas = [];
+  var placaActual = md.info.placas[md.info.placas.length - 1] || '';
+  if (placa === placaActual) {
+    toast('Esta placa ya está registrada', 1);
+    return;
+  }
+
+  // Verificar URL configurada
+  if (!pCfg.invEscrPlaca) {
+    toast('URL de escritura de placa no configurada', 1);
+    return;
+  }
+
+  // Deshabilitar botón durante la escritura
+  var btn = document.getElementById('pPlacaBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Escribiendo...'; }
+
+  apiInvEscribirPlaca(pActive, placa).then(function() {
+    md.info.placas.push(placa);
+    sv(SK_P, pMotos);
+    toast('✓ Placa ' + placa + ' registrada en BD_Inv');
+    render();
+  }).catch(function(e) {
+    toast('Error al escribir placa: ' + (e.message || 'desconocido'), 1);
+    if (btn) { btn.disabled = false; btn.textContent = 'Confirmar placa'; }
+  });
 }
