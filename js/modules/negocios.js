@@ -1,5 +1,5 @@
 /* ============================================================
-   NEGOCIOS.JS — Módulo Negocios Activos (Opción A: barra + chips)
+   NEGOCIOS.JS — Módulo Negocios Activos
    ============================================================
    Columnas:
    Código | Fecha Venta | Marca | Referencia | Cliente | Asesor
@@ -8,6 +8,13 @@
    Filtros (dropdowns): Área | Marca | Tipo | Asesor
    Búsqueda: texto libre (código, cliente, asesor, referencia, actividad)
    Filtros activos se muestran como chips removibles
+
+   TABLA: <table> HTML nativa
+   - Cada columna toma el ancho de su contenido más largo
+   - Una línea por celda (nombres largos no se parten)
+   - Scroll horizontal + vertical cuando no cabe
+   - Header sticky (se queda arriba al hacer scroll vertical)
+   - Columna Código sticky (se queda a la izquierda al scroll horizontal)
    ============================================================ */
 
 /* Scope de manuales Trámites + Contabilidad ordenadas por 'orden' */
@@ -102,6 +109,15 @@ function negProgressColor(pct) {
   if (pct >= 75) return 'var(--gn)';
   if (pct >= 50) return 'var(--yl)';
   return 'var(--or)';
+}
+
+/* Escapar texto para meterlo seguro en HTML */
+function negEsc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 function renderNegocios() {
@@ -226,7 +242,7 @@ function renderNegocios() {
   h += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">';
   h += '<div style="flex:1;min-width:220px;position:relative">';
   h += '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--tm);font-size:13px">🔍</span>';
-  h += '<input type="text" class="inp" id="negSearchInput" placeholder="Buscar código, cliente, asesor, actividad..." value="' + negSearchTxt + '" oninput="negSearchTxt=this.value;render();setTimeout(function(){var el=document.getElementById(\'negSearchInput\');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},0)" style="padding-left:32px;padding-right:32px;font-size:12px;height:34px">';
+  h += '<input type="text" class="inp" id="negSearchInput" placeholder="Buscar código, cliente, asesor, actividad..." value="' + negEsc(negSearchTxt) + '" oninput="negSearchTxt=this.value;render();setTimeout(function(){var el=document.getElementById(\'negSearchInput\');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},0)" style="padding-left:32px;padding-right:32px;font-size:12px;height:34px">';
   if (negSearchTxt) {
     h += '<span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--tm);font-size:16px;cursor:pointer;line-height:1" onclick="negSearchTxt=\'\';render()" title="Limpiar búsqueda">×</span>';
   }
@@ -260,7 +276,7 @@ function renderNegocios() {
   h += '<option value=""' + (negFilterAsesor === '' ? ' selected' : '') + '>Todos los asesores</option>';
   if (negAsesores && negAsesores.length) {
     negAsesores.forEach(function(a) {
-      h += '<option value="' + a.nombre_completo + '"' + (negFilterAsesor === a.nombre_completo ? ' selected' : '') + '>' + a.nombre_completo + '</option>';
+      h += '<option value="' + negEsc(a.nombre_completo) + '"' + (negFilterAsesor === a.nombre_completo ? ' selected' : '') + '>' + negEsc(a.nombre_completo) + '</option>';
     });
   }
   h += '</select>';
@@ -274,7 +290,7 @@ function renderNegocios() {
     h += '<div style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 0;border-top:0.5px solid var(--bd);border-bottom:0.5px solid var(--bd);margin-bottom:10px;align-items:center">';
     h += '<span style="font-size:10px;color:var(--tm);margin-right:4px">FILTROS ACTIVOS:</span>';
     if (negFilterArea) {
-      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + negFilterArea + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterArea=\'\';render()">×</span></span>';
+      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + negEsc(negFilterArea) + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterArea=\'\';render()">×</span></span>';
     }
     if (negFilterMarca) {
       var mLabel = negFilterMarca === 'HERO' ? 'Hero' : negFilterMarca === 'SYM' ? 'SYM' : negFilterMarca === 'BAJAJ' ? 'Bajaj' : 'Otra';
@@ -285,42 +301,60 @@ function renderNegocios() {
       h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + tLabel + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterTipo=\'\';render()">×</span></span>';
     }
     if (negFilterAsesor) {
-      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + negFilterAsesor + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterAsesor=\'\';render()">×</span></span>';
+      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + negEsc(negFilterAsesor) + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterAsesor=\'\';render()">×</span></span>';
     }
     if (negSearchTxt) {
-      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">"' + negSearchTxt + '" <span style="cursor:pointer;font-weight:700" onclick="negSearchTxt=\'\';render()">×</span></span>';
+      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">"' + negEsc(negSearchTxt) + '" <span style="cursor:pointer;font-weight:700" onclick="negSearchTxt=\'\';render()">×</span></span>';
     }
     h += '<span style="font-size:11px;color:var(--bl);cursor:pointer;margin-left:6px;text-decoration:underline" onclick="negFilterArea=\'\';negFilterMarca=\'\';negFilterTipo=\'\';negFilterAsesor=\'\';negSearchTxt=\'\';render()">Limpiar todos</span>';
     h += '</div>';
   }
 
-  // Tabla
+  // ══════════════════════════════════════════════════════════
+  // TABLA HTML NATIVA
+  // ══════════════════════════════════════════════════════════
   h += '<div class="neg-table">';
   h += '<div class="neg-table-bar">';
   h += '<div class="neg-table-count">' + filtered.length + ' NEGOCIO' + (filtered.length !== 1 ? 'S' : '') + ' EN CURSO</div>';
   h += '</div>';
 
-  function th(key, label, right) {
+  // Helper para header de columna con flechas de orden
+  function thCol(key, label, opts) {
+    opts = opts || {};
     var active = negSortKey === key;
     var arrowUp = active && negSortDir === 'asc' ? ' on' : '';
     var arrowDn = active && negSortDir === 'desc' ? ' on' : '';
-    return '<div class="neg-th' + (active ? ' active' : '') + (right ? ' right' : '') + '" onclick="negSort(\'' + key + '\')">' + label + '<span class="neg-th-arrow"><span class="up' + arrowUp + '">▲</span><span class="dn' + arrowDn + '">▼</span></span></div>';
+    var cls = 'neg-th';
+    if (active) cls += ' active';
+    if (opts.right) cls += ' right';
+    if (opts.sticky) cls += ' neg-sticky-col';
+    return '<th class="' + cls + '" onclick="negSort(\'' + key + '\')">' +
+      '<span class="neg-th-inner">' + label +
+      '<span class="neg-th-arrow"><span class="up' + arrowUp + '">▲</span><span class="dn' + arrowDn + '">▼</span></span>' +
+      '</span></th>';
   }
-  h += '<div class="neg-cols neg-table-head">';
-  h += th('code', 'CÓDIGO');
-  h += th('fecha', 'FECHA VENTA');
-  h += th('marca', 'MARCA');
-  h += th('referencia', 'REFERENCIA');
-  h += th('cliente', 'CLIENTE');
-  h += th('asesor', 'ASESOR');
-  h += th('proc', 'PROCESO ACTUAL');
-  h += th('procArea', 'ÁREA');
-  h += th('pct', 'AVANCE');
-  h += th('dias', 'DÍAS', true);
-  h += '</div>';
+
+  h += '<table class="neg-tbl">';
+
+  // Encabezado
+  h += '<thead><tr>';
+  h += thCol('code', 'CÓDIGO', { sticky: true });
+  h += thCol('fecha', 'FECHA VENTA');
+  h += thCol('marca', 'MARCA');
+  h += thCol('referencia', 'REFERENCIA');
+  h += thCol('cliente', 'CLIENTE');
+  h += thCol('asesor', 'ASESOR');
+  h += thCol('proc', 'PROCESO ACTUAL');
+  h += thCol('procArea', 'ÁREA');
+  h += thCol('pct', 'AVANCE');
+  h += thCol('dias', 'DÍAS', { right: true });
+  h += '</tr></thead>';
+
+  // Cuerpo
+  h += '<tbody>';
 
   if (!filtered.length) {
-    h += '<div class="empty">Sin resultados con los filtros aplicados</div>';
+    h += '<tr><td colspan="10" class="neg-empty">Sin resultados con los filtros aplicados</td></tr>';
   } else {
     var tagMap = {
       warn: 'neg-tag-warn',
@@ -330,22 +364,47 @@ function renderNegocios() {
     };
     filtered.forEach(function(r) {
       var markCls = r.marca === 'HERO' ? 'hero' : r.marca === 'SYM' ? 'sym' : r.marca === 'BAJAJ' ? 'bajaj' : 'otra';
-      var daysCls = r.dias >= 15 ? ' neg-days-danger' : r.dias >= 10 ? ' neg-days-warn' : '';
-      h += '<div class="neg-cols neg-row">';
-      h += '<div class="neg-code">' + r.code + '</div>';
-      h += '<div class="neg-fecha">' + negFmtFecha(r.fecha) + '</div>';
-      h += '<div><span class="neg-mark ' + markCls + '">' + (r.marca || '—') + '</span></div>';
-      h += '<div class="neg-cell">' + r.referencia + '</div>';
-      h += '<div class="neg-cell">' + r.cliente + '</div>';
-      h += '<div class="neg-cell">' + r.asesor + '</div>';
-      h += '<div style="display:flex;align-items:center"><span class="neg-tag ' + (tagMap[r.procCls] || 'neg-tag-empty') + '">' + r.proc + '</span></div>';
-      h += '<div class="neg-cell" style="font-size:12px;color:var(--tm)">' + r.procArea + '</div>';
-      h += '<div class="neg-progress"><div class="neg-progress-bar"><div class="neg-progress-fill" style="width:' + r.pct + '%;background:' + negProgressColor(r.pct) + '"></div></div><span class="neg-progress-pct" style="color:' + negProgressColor(r.pct) + '">' + r.pct + '%</span></div>';
-      h += '<div style="text-align:right;font-size:13px' + (daysCls ? ';' + (r.dias >= 15 ? 'color:var(--rd)' : 'color:var(--yl)') + ';font-weight:500' : '') + '">' + r.dias + '</div>';
-      h += '</div>';
+      var diasCls = r.dias >= 15 ? 'neg-days-danger' : r.dias >= 10 ? 'neg-days-warn' : '';
+
+      h += '<tr>';
+
+      // Código (columna fija)
+      h += '<td class="neg-sticky-col"><span class="neg-code">' + negEsc(r.code) + '</span></td>';
+
+      // Fecha
+      h += '<td><span class="neg-fecha">' + negFmtFecha(r.fecha) + '</span></td>';
+
+      // Marca
+      h += '<td><span class="neg-mark ' + markCls + '">' + negEsc(r.marca || '—') + '</span></td>';
+
+      // Referencia
+      h += '<td>' + negEsc(r.referencia) + '</td>';
+
+      // Cliente
+      h += '<td>' + negEsc(r.cliente) + '</td>';
+
+      // Asesor
+      h += '<td>' + negEsc(r.asesor) + '</td>';
+
+      // Proceso actual
+      h += '<td><span class="neg-tag ' + (tagMap[r.procCls] || 'neg-tag-empty') + '">' + negEsc(r.proc) + '</span></td>';
+
+      // Área
+      h += '<td><span class="neg-area">' + negEsc(r.procArea) + '</span></td>';
+
+      // Avance
+      h += '<td><div class="neg-progress"><div class="neg-progress-bar"><div class="neg-progress-fill" style="width:' + r.pct + '%;background:' + negProgressColor(r.pct) + '"></div></div><span class="neg-progress-pct" style="color:' + negProgressColor(r.pct) + '">' + r.pct + '%</span></div></td>';
+
+      // Días
+      h += '<td class="neg-dias-cell ' + diasCls + '">' + r.dias + '</td>';
+
+      h += '</tr>';
     });
   }
+
+  h += '</tbody></table>';
   h += '</div>';
+
   return h;
 }
 
