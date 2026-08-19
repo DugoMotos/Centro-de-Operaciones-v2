@@ -96,6 +96,32 @@ function negFmtFecha(valor) {
   }
 }
 
+/* ------------------------------------------------------------
+   Parsea un valor de fecha/hora de Supabase a Date.
+
+   Ojo con el caso 'YYYY-MM-DD' (fecha sola): `new Date('2026-08-19')`
+   lo interpreta como medianoche UTC, y al mostrarlo en horario de
+   Bogotá (UTC-5) queda como las 19:00 del DÍA ANTERIOR. Por eso las
+   fechas solas se construyen como fecha local.
+
+   Devuelve Date o null.
+   ------------------------------------------------------------ */
+function negParseFechaHora(v) {
+  if (!v) return null;
+  if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
+
+  var s = String(v).trim();
+  if (!s) return null;
+
+  var m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) {
+    return new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10));
+  }
+
+  var d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 /* Días transcurridos desde fecha (soporta seriales de Excel, ISO, dd/mm/aaaa) */
 function negDiasDesde(fecha) {
   if (!fecha) return 0;

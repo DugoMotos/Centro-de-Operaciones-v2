@@ -76,6 +76,9 @@ Los scripts se cargan en este orden en `index.html`:
   - `iD()`, `fD()`, `fT()`, `fIso()`: formato de fechas
   - `negDiasDesde`, `negFmtFecha`: parseo de fechas de origen externo
     (serial de Excel, ISO o DD/MM/AAAA) — compartidos por Negocios y Home
+  - `negParseFechaHora`: parsea fecha/hora de Supabase. Trata `YYYY-MM-DD`
+    como fecha **local**, porque `new Date('2026-08-19')` es medianoche UTC
+    y en Bogotá (UTC-5) se corre al día anterior
   - `esc(s)`: escape de HTML — **obligatorio** para todo dato que venga de
     SharePoint o Supabase y se interpole en un string de HTML
   - `toast(m, e)`: notificaciones
@@ -131,6 +134,9 @@ Cada módulo es **autocontenido**: tiene sus propias funciones de render y manej
 - `negSync()`: carga datos desde SharePoint.
 - `negSort(key)`: ordena por columna.
 - `negGetScopeActs()` / `negFirstPending()`: calculan la actividad actual de cada moto.
+- `negUltimaAct(actividades)`: fecha del último movimiento del proceso, para la
+  columna "Últ. actualización". Devuelve `{ ts, dias }`; `ts = 0` si la moto no
+  tiene actividades registradas.
 
 ### `js/modules/procedimiento.js`
 - El módulo más grande (~660 líneas).

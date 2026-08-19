@@ -308,6 +308,45 @@
   font-weight:500;
 }
 
+/* ============================================================
+   Última actualización del proceso
+   ============================================================
+   Dos datos en una línea: la fecha del último registro y, al
+   lado y más tenue, hace cuánto fue.
+
+   El color avisa cuando el proceso lleva tiempo sin moverse
+   (7 días = aviso, 15 = alerta). Se aplica a la fecha; el
+   "hace Nd" queda siempre atenuado para no gritar dos veces.
+   ============================================================ */
+.neg-ult-cell{
+  white-space:nowrap;
+}
+.neg-ult-fecha{
+  font-family:var(--fm);
+  font-size:11px;
+  color:#888;
+}
+.neg-ult-rel{
+  font-size:10px;
+  color:var(--tm);
+  margin-left:6px;
+  opacity:0.75;
+}
+.neg-ult-warn .neg-ult-fecha{
+  color:var(--yl);
+  font-weight:500;
+}
+.neg-ult-danger .neg-ult-fecha{
+  color:var(--rd);
+  font-weight:500;
+}
+.neg-ult-vacio{
+  font-size:10px;
+  color:var(--tm);
+  font-style:italic;
+  opacity:0.6;
+}
+
 /* Días en proceso */
 .neg-dias-cell{
   text-align:right;

@@ -4,6 +4,42 @@ Todas las versiones notables del Centro de Operaciones Dugomotos.
 
 ---
 
+## [2.2.0] — 2026-08-19
+
+### ✨ Nueva columna "Últ. actualización" en Negocios activos
+
+Muestra cuándo fue la última vez que se registró movimiento en el proceso
+de cada moto. Sirve para detectar negocios estancados: una moto puede tener
+30% de avance y llevar tres semanas sin que nadie toque nada.
+
+- **De dónde sale el dato**: la actividad más reciente de esa moto en
+  `registro_actividades`. Se consideran **todas** las actividades
+  registradas, no solo las ejecutadas — un "no aplica" también es
+  movimiento del proceso.
+- **Qué fecha usa**: `fecha_registro` (la que reportó la persona) y, si no
+  está, `created_at` (cuándo entró a la BD). Si alguien registra hoy algo
+  que hizo ayer, para el negocio vale ayer.
+- **Cómo se ve**: la fecha más un "hoy / ayer / hace Nd" al lado.
+  El color avisa cuando el proceso lleva tiempo quieto —
+  **amarillo a los 7 días, rojo a los 15**. Los umbrales están en
+  `negocios.js`, dentro del bloque de la celda.
+- Motos sin ninguna actividad registrada muestran **"Sin registros"**.
+- La columna es **ordenable**, como el resto.
+
+### 🐛 Corregido
+
+- **Ordenamiento numérico de fechas.** El `sort` de la tabla convertía a
+  texto todo lo que no fuera `pct` o `dias`. Se reemplazó por una lista
+  `COLS_NUMERICAS` para que la columna nueva ordene por timestamp real y
+  no alfabéticamente.
+- **Corrimiento de un día en fechas sin hora.** `new Date('2026-08-19')`
+  se interpreta como medianoche **UTC**, que en horario de Bogotá (UTC-5)
+  es el día anterior a las 19:00 — la columna habría mostrado 18/08.
+  La nueva `negParseFechaHora()` en `utils.js` construye esas fechas como
+  locales. Verificado en máquina con zona `UTC-05:00`.
+
+---
+
 ## [2.1.0] — 2026-08-19
 
 ### 🧹 Limpieza de duplicados

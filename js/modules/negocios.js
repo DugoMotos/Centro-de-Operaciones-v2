@@ -3,7 +3,7 @@
    ============================================================
    Columnas:
    Código | Fecha Venta | Marca | Referencia | Cliente | Asesor
-   | Proceso Actual | Área | Avance | Días
+   | Proceso Actual | Área | Avance | Últ. Actualización | Días
 
    Filtros (dropdowns): Área | Marca | Tipo | Asesor
    Búsqueda: texto libre (código, cliente, asesor, referencia, actividad)
@@ -41,8 +41,38 @@ function negFirstPending(ejecutadasSet) {
 }
 
 /* NOTA: negFmtFecha, negDiasDesde, negNormMarca, negNormTipo,
-   negProgressColor y esc viven en js/utils.js — los comparte
-   con home.js. No los redefinas acá. */
+   negProgressColor, negParseFechaHora y esc viven en js/utils.js
+   — los comparte con home.js. No los redefinas acá. */
+
+/* ============================================================
+   negUltimaAct — Última vez que se registró algo de esta moto
+   ============================================================
+   Recorre TODAS las actividades registradas de la moto (no solo
+   las ejecutadas: un "no aplica" también es movimiento del
+   proceso) y se queda con la más reciente.
+
+   Prioriza `fecha_registro` (la fecha que reportó la persona)
+   sobre `created_at` (cuándo entró a la BD). Si alguien registra
+   hoy una actividad que hizo ayer, para el negocio vale ayer.
+
+   Devuelve { ts: <milisegundos>, dias: <número> }.
+   ts = 0 cuando la moto no tiene ninguna actividad registrada.
+   ============================================================ */
+function negUltimaAct(actividades) {
+  var maxTs = 0;
+
+  (actividades || []).forEach(function(r) {
+    var d = negParseFechaHora(r.fecha_registro || r.created_at);
+    if (!d) return;
+    var ts = d.getTime();
+    if (ts > maxTs) maxTs = ts;
+  });
+
+  return {
+    ts: maxTs,
+    dias: maxTs ? Math.max(0, Math.floor((Date.now() - maxTs) / 86400000)) : null
+  };
+}
 
 function renderNegocios() {
   if (negLoading) {
@@ -123,11 +153,14 @@ function renderNegocios() {
       procCls = 'empty';
     }
 
+    var ultAct = negUltimaAct(actividades);
+
     return {
       code: code, marca: marca, referencia: motoRef, cliente: cliente,
       asesor: asesor, fecha: fecha, dias: dias, pct: pct,
       proc: procLabel, procArea: procArea, procCls: procCls,
-      tipo: tipo
+      tipo: tipo,
+      ultActTs: ultAct.ts, ultActDias: ultAct.dias
     };
   }).filter(function(r) { return r.code; });
 
@@ -147,10 +180,13 @@ function renderNegocios() {
   }
 
   // Ordenar
+  // ultActTs es un timestamp en milisegundos: va por el camino numérico,
+  // si no ordenaría como texto y quedaría mal.
+  var COLS_NUMERICAS = { pct: 1, dias: 1, ultActTs: 1 };
   filtered.sort(function(a, b) {
     var va = a[negSortKey], vb = b[negSortKey];
-    if (negSortKey === 'pct' || negSortKey === 'dias') {
-      va = Number(va); vb = Number(vb);
+    if (COLS_NUMERICAS[negSortKey]) {
+      va = Number(va) || 0; vb = Number(vb) || 0;
     } else {
       va = String(va).toLowerCase(); vb = String(vb).toLowerCase();
     }
@@ -271,6 +307,7 @@ function renderNegocios() {
   h += thCol('proc', 'PROCESO ACTUAL');
   h += thCol('procArea', 'ÁREA');
   h += thCol('pct', 'AVANCE');
+  h += thCol('ultActTs', 'ÚLT. ACTUALIZACIÓN');
   h += thCol('dias', 'DÍAS', { right: true });
   h += '</tr></thead>';
 
@@ -278,7 +315,7 @@ function renderNegocios() {
   h += '<tbody>';
 
   if (!filtered.length) {
-    h += '<tr><td colspan="10" class="neg-empty">Sin resultados con los filtros aplicados</td></tr>';
+    h += '<tr><td colspan="11" class="neg-empty">Sin resultados con los filtros aplicados</td></tr>';
   } else {
     var tagMap = {
       warn: 'neg-tag-warn',
@@ -318,6 +355,23 @@ function renderNegocios() {
 
       // Avance
       h += '<td><div class="neg-progress"><div class="neg-progress-bar"><div class="neg-progress-fill" style="width:' + r.pct + '%;background:' + negProgressColor(r.pct) + '"></div></div><span class="neg-progress-pct" style="color:' + negProgressColor(r.pct) + '">' + r.pct + '%</span></div></td>';
+
+      // Última actualización del proceso
+      if (r.ultActTs) {
+        // Sin movimiento hace mucho = proceso estancado
+        var ultCls = r.ultActDias >= 15 ? ' neg-ult-danger'
+                   : r.ultActDias >= 7  ? ' neg-ult-warn'
+                   : '';
+        var rel = r.ultActDias === 0 ? 'hoy'
+                : r.ultActDias === 1 ? 'ayer'
+                : 'hace ' + r.ultActDias + 'd';
+        h += '<td class="neg-ult-cell' + ultCls + '" title="Último registro: ' + esc(rel) + '">' +
+             '<span class="neg-ult-fecha">' + negFmtFecha(r.ultActTs) + '</span>' +
+             '<span class="neg-ult-rel">' + esc(rel) + '</span>' +
+             '</td>';
+      } else {
+        h += '<td class="neg-ult-cell neg-ult-vacio" title="Esta moto no tiene ninguna actividad registrada">Sin registros</td>';
+      }
 
       // Días
       h += '<td class="neg-dias-cell ' + diasCls + '">' + r.dias + '</td>';

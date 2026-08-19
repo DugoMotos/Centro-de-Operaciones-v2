@@ -158,7 +158,11 @@ sandbox.negMotos = [{
 }];
 sandbox.negAvances = [{
   codigo_barras: 'DM1196', actividad_num: '1', estado: 'ejecutada',
-  ejecuto: VENENO, created_at: '2026-08-19T10:00:00Z'
+  ejecuto: VENENO, created_at: '2026-08-19T10:00:00Z',
+  /* Fecha sola a propósito: ejercita la rama de negParseFechaHora que
+     evita que la columna "Última actualización" se corra un día en
+     horario de Bogotá. */
+  fecha_registro: '2026-08-19'
 }];
 sandbox.negAsesores = [{ nombre_completo: VENENO }];
 sandbox.planData = [{
