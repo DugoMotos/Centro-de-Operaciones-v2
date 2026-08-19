@@ -64,58 +64,58 @@ function fIso(date) {
 }
 
 /* ============================================================
-   PARSEO DE FECHAS (Negocios)
+   FECHAS DE ORIGEN EXTERNO (Negocios / Home)
    ============================================================
-   Soporta múltiples formatos: DD/MM/YYYY, ISO, número serial
-   de Excel, Date object. Retorna Date o null.
+   Los datos que llegan de SharePoint/Excel traen la fecha en
+   formatos mezclados: serial de Excel, ISO, o DD/MM/AAAA.
+   Estos dos helpers absorben esa variedad.
+
+   Se usan desde negocios.js y home.js — por eso viven acá y no
+   dentro de un módulo.
    ============================================================ */
-function negParseFecha(v) {
-  if (!v) return null;
 
-  // Si ya es Date
-  if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
-
-  var s = String(v).trim();
-  if (!s || s === '—' || s.toLowerCase() === 'na') return null;
-
-  // Formato DD/MM/YYYY o DD/MM/YY
-  var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
-  if (m) {
-    var dia = parseInt(m[1], 10);
-    var mes = parseInt(m[2], 10) - 1;
-    var anio = parseInt(m[3], 10);
-    if (anio < 100) anio += 2000;
-    var d = new Date(anio, mes, dia);
-    return isNaN(d.getTime()) ? null : d;
-  }
-
-  // Número serial de Excel (días desde 1900-01-01)
-  if (/^\d+(\.\d+)?$/.test(s)) {
-    var n = parseFloat(s);
-    if (n > 25569 && n < 60000) { // entre 1970 y ~2064
-      var d = new Date((n - 25569) * 86400000);
-      return isNaN(d.getTime()) ? null : d;
+/* Formatear fecha a dd/mm/aaaa (soporta seriales de Excel) */
+function negFmtFecha(valor) {
+  if (!valor) return '—';
+  try {
+    var d;
+    var numVal = Number(valor);
+    if (!isNaN(numVal) && numVal > 25569 && numVal < 100000) {
+      d = new Date(Math.round((numVal - 25569) * 86400 * 1000));
+    } else {
+      d = new Date(valor);
     }
+    if (isNaN(d.getTime())) return String(valor);
+    var opts = { timeZone: 'America/Bogota', day: '2-digit', month: '2-digit', year: 'numeric' };
+    var partes = new Intl.DateTimeFormat('es-CO', opts).formatToParts(d);
+    var map = {};
+    partes.forEach(function(p) { map[p.type] = p.value; });
+    return map.day + '/' + map.month + '/' + map.year;
+  } catch (e) {
+    return String(valor);
   }
-
-  // Formato ISO o cualquiera que JS reconozca
-  var d = new Date(s);
-  return isNaN(d.getTime()) ? null : d;
 }
 
-/* Días desde una fecha hasta hoy */
-function negDiasDesde(fechaRaw) {
-  var d = negParseFecha(fechaRaw);
-  if (!d) return 0;
-  var ms = Date.now() - d.getTime();
-  return Math.max(0, Math.floor(ms / 86400000));
-}
-
-/* Formato DD/MM/AA para mostrar */
-function negFmtFecha(v) {
-  var d = negParseFecha(v);
-  if (!d) return '—';
-  return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + String(d.getFullYear()).slice(-2);
+/* Días transcurridos desde fecha (soporta seriales de Excel, ISO, dd/mm/aaaa) */
+function negDiasDesde(fecha) {
+  if (!fecha) return 0;
+  try {
+    var d;
+    var numVal = Number(fecha);
+    if (!isNaN(numVal) && numVal > 25569 && numVal < 100000) {
+      d = new Date(Math.round((numVal - 25569) * 86400 * 1000));
+    } else if (fecha.indexOf && fecha.indexOf('/') >= 0) {
+      var p = fecha.split('/');
+      d = new Date(p[2], parseInt(p[1], 10) - 1, parseInt(p[0], 10));
+    } else {
+      d = new Date(fecha);
+    }
+    if (isNaN(d.getTime())) return 0;
+    var ms = new Date().getTime() - d.getTime();
+    return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
+  } catch (e) {
+    return 0;
+  }
 }
 
 /* ============================================================
@@ -138,35 +138,50 @@ function toast(m, e) {
 var chk = '<svg width="10" height="10" viewBox="0 0 14 14"><path d="M3 7l3 3 5-5" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 /* ============================================================
+   ESCAPE DE HTML
+   ============================================================
+   Obligatorio para cualquier dato que venga de SharePoint o
+   Supabase y se interpole en un string de HTML. Sin esto, un
+   nombre de cliente con < o " rompe el render.
+   ============================================================ */
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/* ============================================================
    COLORES POR PORCENTAJE (Negocios)
    ============================================================ */
-function negProgressColor(p) {
-  return p >= 100 ? '#1D9E75' :
-         p >= 75  ? '#97C459' :
-         p >= 50  ? '#EF9F27' :
-         p >= 25  ? '#BA7517' :
-                    '#E24B4A';
+function negProgressColor(pct) {
+  if (pct >= 100) return 'var(--gn)';
+  if (pct >= 75) return 'var(--gn)';
+  if (pct >= 50) return 'var(--yl)';
+  return 'var(--or)';
 }
 
 /* ============================================================
    NORMALIZACIÓN DE TEXTOS (Negocios)
    ============================================================ */
 
-/* Normaliza tipo de moto desde BD_Tramites */
-function negNormTipo(t) {
-  if (!t) return '';
-  var s = String(t).toLowerCase();
-  if (s.indexOf('subdistr') >= 0) return 'ns';
-  if (s.indexOf('distrib') >= 0) return 'nd';
-  if (s.indexOf('usad') >= 0) return 'us';
-  return '';
+/* Normalización de marca */
+function negNormMarca(m) {
+  m = (m || '').toString().toUpperCase().trim();
+  if (m === 'HERO') return 'HERO';
+  if (m === 'SYM') return 'SYM';
+  if (m === 'BAJAJ') return 'BAJAJ';
+  if (!m) return '';
+  return 'OTRA';
 }
 
-/* Normaliza marca a HERO/SYM/OTRA */
-function negNormMarca(m) {
-  if (!m) return 'OTRA';
-  var s = String(m).toUpperCase().trim();
-  if (s.indexOf('HERO') >= 0) return 'HERO';
-  if (s.indexOf('SYM') >= 0) return 'SYM';
-  return 'OTRA';
+/* Normalización de tipo */
+function negNormTipo(t) {
+  t = (t || '').toString().toLowerCase().trim();
+  if (t.indexOf('nueva') >= 0) return 'nd';
+  if (t.indexOf('sub') >= 0) return 'ns';
+  if (t.indexOf('usad') >= 0) return 'us';
+  return '';
 }

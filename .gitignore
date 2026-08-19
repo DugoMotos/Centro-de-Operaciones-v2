@@ -1,0 +1,16 @@
+# ============================================================
+# Dependencias de herramientas de desarrollo
+# ============================================================
+# node_modules son las herramientas que usás para revisar el
+# código (ESLint), NO son parte del aplicativo. Nunca se suben
+# al repositorio: son miles de archivos y se regeneran con
+# `npm install`.
+node_modules/
+
+# ============================================================
+# Sistema operativo / editor
+# ============================================================
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/

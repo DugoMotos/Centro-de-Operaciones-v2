@@ -66,8 +66,37 @@ Ver [`docs/desarrollo.md`](docs/desarrollo.md) para detalles técnicos.
 
 1. Identificar el módulo afectado (Negocios, Trámites, etc.).
 2. Modificar el archivo correspondiente en `js/modules/` o `css/modules/`.
-3. Probar localmente abriendo `index.html` con un servidor local.
-4. Hacer commit y push al repositorio.
+3. Correr `npm run verify` (ver abajo).
+4. Probar en el navegador con `npm run serve`.
+5. **Subir el `?v=` en `index.html`** y hacer commit y push.
+
+---
+
+## Verificación antes de subir
+
+> El aplicativo **no necesita Node para funcionar** — es HTML/CSS/JS que
+> corre en el navegador. Node es solo para estas herramientas de revisión.
+> Instalar una vez: `winget install OpenJS.NodeJS.LTS`, después `npm install`.
+
+```bash
+npm run verify     # corre las 4 revisiones de abajo, en orden
+```
+
+| Comando | Qué hace | Por qué importa |
+|---|---|---|
+| `npm run check` | Valida la sintaxis de los 13 archivos JS | Sin esto, un error de sintaxis se descubre cuando alguien abre la página rota |
+| `npm run check:dupes` | Busca funciones definidas en **más de un archivo** | Con globales compartidas, la última definición pisa a la anterior **sin dar error**. Fue el bug de la v2.1.0 |
+| `npm run lint` | ESLint: typos, redeclaraciones, código muerto | Caza errores que el navegador acepta en silencio |
+| `npm run smoke` | Carga todo y ejecuta cada `render()`, con datos vacíos y con datos que rompen HTML | Verifica que `esc()` esté aplicado en todas las vistas |
+
+```bash
+npm run serve      # servidor local en http://localhost:3000
+```
+
+**`npm run verify` sale con código 0 si todo está bien.** Si algo falla, no subas.
+
+⚠️ Estas herramientas revisan el código, **no revisan cómo se ve**. Antes de
+subir, abrí el aplicativo y recorré las pestañas que tocaste.
 
 ---
 

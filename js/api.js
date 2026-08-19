@@ -30,9 +30,30 @@ function apiPost(url, body, timeout) {
     body: JSON.stringify(body || {}),
     signal: ctrl.signal
   }).then(function(r) {
-    clearTimeout(to);
-    return r.json();
-  });
+    // Power Automate puede responder error con HTML o texto plano.
+    // Sin este chequeo, r.json() explota con "Unexpected token <" y
+    // el mensaje real del flow se pierde.
+    if (!r.ok) {
+      return r.text().then(function(text) {
+        throw new Error('Power Automate ' + r.status + ': ' + (text || r.statusText));
+      });
+    }
+    if (r.status === 204) return {};
+    return r.text().then(function(text) {
+      if (!text) return {};
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        throw new Error('Respuesta no es JSON válido: ' + text.substring(0, 120));
+      }
+    });
+  }).then(
+    // clearTimeout en AMBOS caminos: si el fetch rechaza, el timer del
+    // abort quedaba vivo. Se propaga el error original sin envolverlo —
+    // negocios.js y procedimiento.js dependen de e.name === 'AbortError'.
+    function(v) { clearTimeout(to); return v; },
+    function(e) { clearTimeout(to); throw e; }
+  );
 }
 
 /* ============================================================
@@ -99,12 +120,8 @@ function apiContEscribirFecha(codigo_barras, fecha) {
   });
 }
 
-function apiInvEscribirPlaca(codigo_barras, placa) {
-  return apiPost(getUrl('invW'), {
-    codigo_barras: codigo_barras,
-    placa: placa
-  });
-}
+/* apiInvEscribirPlaca vive en la sección "APIs DE INVENTARIO",
+   más abajo en este mismo archivo. */
 
 function apiTramListar() {
   return apiPost(getUrl('tramLista'), {}, API_TIMEOUT_LONG);
@@ -223,6 +240,7 @@ function apiInvEscribirPlaca(codigoBarras, placa) {
     placa: placa
   });
 }
+
 /* ============================================================
    apiRegAlistCrear — Crea N registros en registro_alistamientos
    ============================================================

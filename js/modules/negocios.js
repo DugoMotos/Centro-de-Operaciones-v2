@@ -40,85 +40,9 @@ function negFirstPending(ejecutadasSet) {
   return null;
 }
 
-/* Formatear fecha a dd/mm/aaaa (soporta seriales de Excel) */
-function negFmtFecha(valor) {
-  if (!valor) return '—';
-  try {
-    var d;
-    var numVal = Number(valor);
-    if (!isNaN(numVal) && numVal > 25569 && numVal < 100000) {
-      d = new Date(Math.round((numVal - 25569) * 86400 * 1000));
-    } else {
-      d = new Date(valor);
-    }
-    if (isNaN(d.getTime())) return String(valor);
-    var opts = { timeZone: 'America/Bogota', day: '2-digit', month: '2-digit', year: 'numeric' };
-    var partes = new Intl.DateTimeFormat('es-CO', opts).formatToParts(d);
-    var map = {};
-    partes.forEach(function(p) { map[p.type] = p.value; });
-    return map.day + '/' + map.month + '/' + map.year;
-  } catch (e) {
-    return String(valor);
-  }
-}
-
-/* Días transcurridos desde fecha (soporta seriales de Excel, ISO, dd/mm/aaaa) */
-function negDiasDesde(fecha) {
-  if (!fecha) return 0;
-  try {
-    var d;
-    var numVal = Number(fecha);
-    if (!isNaN(numVal) && numVal > 25569 && numVal < 100000) {
-      d = new Date(Math.round((numVal - 25569) * 86400 * 1000));
-    } else if (fecha.indexOf && fecha.indexOf('/') >= 0) {
-      var p = fecha.split('/');
-      d = new Date(p[2], parseInt(p[1], 10) - 1, parseInt(p[0], 10));
-    } else {
-      d = new Date(fecha);
-    }
-    if (isNaN(d.getTime())) return 0;
-    var ms = new Date().getTime() - d.getTime();
-    return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
-  } catch (e) {
-    return 0;
-  }
-}
-
-/* Normalización de marca */
-function negNormMarca(m) {
-  m = (m || '').toString().toUpperCase().trim();
-  if (m === 'HERO') return 'HERO';
-  if (m === 'SYM') return 'SYM';
-  if (m === 'BAJAJ') return 'BAJAJ';
-  if (!m) return '';
-  return 'OTRA';
-}
-
-/* Normalización de tipo */
-function negNormTipo(t) {
-  t = (t || '').toString().toLowerCase().trim();
-  if (t.indexOf('nueva') >= 0) return 'nd';
-  if (t.indexOf('sub') >= 0) return 'ns';
-  if (t.indexOf('usad') >= 0) return 'us';
-  return '';
-}
-
-/* Color de la barra de avance */
-function negProgressColor(pct) {
-  if (pct >= 100) return 'var(--gn)';
-  if (pct >= 75) return 'var(--gn)';
-  if (pct >= 50) return 'var(--yl)';
-  return 'var(--or)';
-}
-
-/* Escapar texto para meterlo seguro en HTML */
-function negEsc(s) {
-  return String(s == null ? '' : s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+/* NOTA: negFmtFecha, negDiasDesde, negNormMarca, negNormTipo,
+   negProgressColor y esc viven en js/utils.js — los comparte
+   con home.js. No los redefinas acá. */
 
 function renderNegocios() {
   if (negLoading) {
@@ -242,7 +166,7 @@ function renderNegocios() {
   h += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">';
   h += '<div style="flex:1;min-width:220px;position:relative">';
   h += '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--tm);font-size:13px">🔍</span>';
-  h += '<input type="text" class="inp" id="negSearchInput" placeholder="Buscar código, cliente, asesor, actividad..." value="' + negEsc(negSearchTxt) + '" oninput="negSearchTxt=this.value;render();setTimeout(function(){var el=document.getElementById(\'negSearchInput\');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},0)" style="padding-left:32px;padding-right:32px;font-size:12px;height:34px">';
+  h += '<input type="text" class="inp" id="negSearchInput" placeholder="Buscar código, cliente, asesor, actividad..." value="' + esc(negSearchTxt) + '" oninput="negSearchTxt=this.value;render();setTimeout(function(){var el=document.getElementById(\'negSearchInput\');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},0)" style="padding-left:32px;padding-right:32px;font-size:12px;height:34px">';
   if (negSearchTxt) {
     h += '<span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--tm);font-size:16px;cursor:pointer;line-height:1" onclick="negSearchTxt=\'\';render()" title="Limpiar búsqueda">×</span>';
   }
@@ -276,7 +200,7 @@ function renderNegocios() {
   h += '<option value=""' + (negFilterAsesor === '' ? ' selected' : '') + '>Todos los asesores</option>';
   if (negAsesores && negAsesores.length) {
     negAsesores.forEach(function(a) {
-      h += '<option value="' + negEsc(a.nombre_completo) + '"' + (negFilterAsesor === a.nombre_completo ? ' selected' : '') + '>' + negEsc(a.nombre_completo) + '</option>';
+      h += '<option value="' + esc(a.nombre_completo) + '"' + (negFilterAsesor === a.nombre_completo ? ' selected' : '') + '>' + esc(a.nombre_completo) + '</option>';
     });
   }
   h += '</select>';
@@ -290,7 +214,7 @@ function renderNegocios() {
     h += '<div style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 0;border-top:0.5px solid var(--bd);border-bottom:0.5px solid var(--bd);margin-bottom:10px;align-items:center">';
     h += '<span style="font-size:10px;color:var(--tm);margin-right:4px">FILTROS ACTIVOS:</span>';
     if (negFilterArea) {
-      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + negEsc(negFilterArea) + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterArea=\'\';render()">×</span></span>';
+      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + esc(negFilterArea) + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterArea=\'\';render()">×</span></span>';
     }
     if (negFilterMarca) {
       var mLabel = negFilterMarca === 'HERO' ? 'Hero' : negFilterMarca === 'SYM' ? 'SYM' : negFilterMarca === 'BAJAJ' ? 'Bajaj' : 'Otra';
@@ -301,10 +225,10 @@ function renderNegocios() {
       h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + tLabel + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterTipo=\'\';render()">×</span></span>';
     }
     if (negFilterAsesor) {
-      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + negEsc(negFilterAsesor) + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterAsesor=\'\';render()">×</span></span>';
+      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + esc(negFilterAsesor) + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterAsesor=\'\';render()">×</span></span>';
     }
     if (negSearchTxt) {
-      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">"' + negEsc(negSearchTxt) + '" <span style="cursor:pointer;font-weight:700" onclick="negSearchTxt=\'\';render()">×</span></span>';
+      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">"' + esc(negSearchTxt) + '" <span style="cursor:pointer;font-weight:700" onclick="negSearchTxt=\'\';render()">×</span></span>';
     }
     h += '<span style="font-size:11px;color:var(--bl);cursor:pointer;margin-left:6px;text-decoration:underline" onclick="negFilterArea=\'\';negFilterMarca=\'\';negFilterTipo=\'\';negFilterAsesor=\'\';negSearchTxt=\'\';render()">Limpiar todos</span>';
     h += '</div>';
@@ -369,28 +293,28 @@ function renderNegocios() {
       h += '<tr>';
 
       // Código (columna fija)
-      h += '<td class="neg-sticky-col"><span class="neg-code">' + negEsc(r.code) + '</span></td>';
+      h += '<td class="neg-sticky-col"><span class="neg-code">' + esc(r.code) + '</span></td>';
 
       // Fecha
       h += '<td><span class="neg-fecha">' + negFmtFecha(r.fecha) + '</span></td>';
 
       // Marca
-      h += '<td><span class="neg-mark ' + markCls + '">' + negEsc(r.marca || '—') + '</span></td>';
+      h += '<td><span class="neg-mark ' + markCls + '">' + esc(r.marca || '—') + '</span></td>';
 
       // Referencia
-      h += '<td>' + negEsc(r.referencia) + '</td>';
+      h += '<td>' + esc(r.referencia) + '</td>';
 
       // Cliente
-      h += '<td>' + negEsc(r.cliente) + '</td>';
+      h += '<td>' + esc(r.cliente) + '</td>';
 
       // Asesor
-      h += '<td>' + negEsc(r.asesor) + '</td>';
+      h += '<td>' + esc(r.asesor) + '</td>';
 
       // Proceso actual
-      h += '<td><span class="neg-tag ' + (tagMap[r.procCls] || 'neg-tag-empty') + '">' + negEsc(r.proc) + '</span></td>';
+      h += '<td><span class="neg-tag ' + (tagMap[r.procCls] || 'neg-tag-empty') + '">' + esc(r.proc) + '</span></td>';
 
       // Área
-      h += '<td><span class="neg-area">' + negEsc(r.procArea) + '</span></td>';
+      h += '<td><span class="neg-area">' + esc(r.procArea) + '</span></td>';
 
       // Avance
       h += '<td><div class="neg-progress"><div class="neg-progress-bar"><div class="neg-progress-fill" style="width:' + r.pct + '%;background:' + negProgressColor(r.pct) + '"></div></div><span class="neg-progress-pct" style="color:' + negProgressColor(r.pct) + '">' + r.pct + '%</span></div></td>';

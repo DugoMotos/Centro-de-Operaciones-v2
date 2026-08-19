@@ -94,7 +94,7 @@ function renderPlanilla() {
   h += '<div class="plnl-toolbar">';
   h += '<div class="plnl-filter">';
   h += '<div class="plnl-filter-lbl">Fecha</div>';
-  h += '<input type="date" class="plnl-inp" value="' + planillaFecha + '" onchange="planillaFecha=this.value;planillaSync()">';
+  h += '<input type="date" class="plnl-inp" value="' + esc(planillaFecha) + '" onchange="planillaFecha=this.value;planillaSync()">';
   h += '</div>';
   h += '<div class="plnl-filter">';
   h += '<div class="plnl-filter-lbl">Marca</div>';
@@ -247,23 +247,23 @@ function planillaRenderBlock(marca) {
       if (r.chasis.length > 6) {
         var head = r.chasis.substring(0, r.chasis.length - 6);
         var tail = r.chasis.substring(r.chasis.length - 6);
-        chasisHtml = '<span class="plnl-chasis-head">' + head + '</span><span class="plnl-chasis-tail">' + tail + '</span>';
+        chasisHtml = '<span class="plnl-chasis-head">' + esc(head) + '</span><span class="plnl-chasis-tail">' + esc(tail) + '</span>';
       } else {
-        chasisHtml = '<span class="plnl-chasis-tail">' + r.chasis + '</span>';
+        chasisHtml = '<span class="plnl-chasis-tail">' + esc(r.chasis) + '</span>';
       }
     }
     var ref = ((r.linea || '') + ' ' + (r.referencia || '')).trim() || '—';
 
     h += '<tr' + (isPlacaFirst ? ' class="plnl-placa-first"' : '') + '>';
-    h += '<td class="plnl-code">' + r.codigo_barras + '</td>';
+    h += '<td class="plnl-code">' + esc(r.codigo_barras) + '</td>';
     h += '<td class="plnl-chasis">' + chasisHtml + '</td>';
-    h += '<td>' + ref + '</td>';
-    h += '<td>' + (r.color || '—') + '</td>';
-    h += '<td>' + (r.cliente || '—') + '</td>';
-    h += '<td><span class="plnl-proc-dot" style="background:' + procColor + '"></span>' + r.proceso + '</td>';
+    h += '<td>' + esc(ref) + '</td>';
+    h += '<td>' + esc(r.color || '—') + '</td>';
+    h += '<td>' + esc(r.cliente || '—') + '</td>';
+    h += '<td><span class="plnl-proc-dot" style="background:' + procColor + '"></span>' + esc(r.proceso) + '</td>';
     if (isEjec) {
       h += '<td><span class="plnl-tag plnl-tag-ejec">Ejecutada</span></td>';
-      h += '<td class="plnl-tec">' + (r.tecnico || '—') + '</td>';
+      h += '<td class="plnl-tec">' + esc(r.tecnico || '—') + '</td>';
       h += '<td class="plnl-tec">' + planillaFmtFechaHora(r.fecha_ejecucion) + '</td>';
     } else {
       h += '<td><span class="plnl-tag plnl-tag-pend">Pendiente</span></td>';

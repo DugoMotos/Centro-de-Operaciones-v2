@@ -15,14 +15,14 @@ function renderConfig() {
         '<div style="font-size:36px;margin-bottom:12px">🔧</div>' +
         '<div style="font-size:14px;font-weight:700;margin-bottom:4px">Configuración administrador</div>' +
         '<div style="font-size:11px;color:var(--tm);margin-bottom:16px">Creá tu PIN de administrador</div>' +
-        '<input type="password" inputmode="numeric" maxlength="6" class="inp" style="max-width:180px;margin:0 auto 12px;display:block;letter-spacing:8px" id="cfgPinIn" placeholder="••••" value="' + cfgPinInput + '" oninput="cfgPinInput=this.value" onkeydown="if(event.key===\'Enter\')cfgCheckPin()">' +
+        '<input type="password" inputmode="numeric" maxlength="6" class="inp" style="max-width:180px;margin:0 auto 12px;display:block;letter-spacing:8px" id="cfgPinIn" placeholder="••••" value="' + esc(cfgPinInput) + '" oninput="cfgPinInput=this.value" onkeydown="if(event.key===\'Enter\')cfgCheckPin()">' +
         '<button class="btn btn-p" style="max-width:180px;margin:0 auto" onclick="cfgCheckPin()">Crear PIN</button></div>';
     }
     return '<div style="text-align:center;padding:30px 20px">' +
       '<div style="font-size:36px;margin-bottom:12px">🔒</div>' +
       '<div style="font-size:14px;font-weight:700;margin-bottom:4px">Configuración administrador</div>' +
       '<div style="font-size:11px;color:var(--tm);margin-bottom:16px">Solo el administrador puede modificar la configuración</div>' +
-      '<input type="password" inputmode="numeric" maxlength="6" class="inp" style="max-width:180px;margin:0 auto 12px;display:block;letter-spacing:8px" id="cfgPinIn" placeholder="••••" value="' + cfgPinInput + '" oninput="cfgPinInput=this.value" onkeydown="if(event.key===\'Enter\')cfgCheckPin()">' +
+      '<input type="password" inputmode="numeric" maxlength="6" class="inp" style="max-width:180px;margin:0 auto 12px;display:block;letter-spacing:8px" id="cfgPinIn" placeholder="••••" value="' + esc(cfgPinInput) + '" oninput="cfgPinInput=this.value" onkeydown="if(event.key===\'Enter\')cfgCheckPin()">' +
       '<button class="btn btn-p" style="max-width:180px;margin:0 auto" onclick="cfgCheckPin()">Ingresar</button></div>';
   }
 
@@ -108,7 +108,7 @@ function renderConfig() {
         '<div style="width:6px;height:6px;border-radius:50%;background:' + (hasUrl ? 'var(--gn)' : 'var(--rd)') + '"></div>' +
         '<span style="font-size:10px;font-weight:700">' + (item.label === 'Consulta' ? '🔍' : '✏️') + ' ' + item.label + '</span>' +
         '<span style="font-size:9px;color:var(--tm)">' + item.desc + '</span></div>';
-      h += '<input class="inp inp-sm" style="font-family:var(--fm);font-size:9px" value="' + (urlOverrides[item.key] || '') + '" placeholder="' + (hasUrl ? '✓ URL por defecto configurada' : 'URL pendiente...') + '" oninput="urlOverrides.' + item.key + '=this.value">';
+      h += '<input class="inp inp-sm" style="font-family:var(--fm);font-size:9px" value="' + esc(urlOverrides[item.key] || '') + '" placeholder="' + (hasUrl ? '✓ URL por defecto configurada' : 'URL pendiente...') + '" oninput="urlOverrides.' + item.key + '=this.value">';
       h += '</div>';
     });
     h += '</div>';

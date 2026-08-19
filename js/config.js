@@ -47,7 +47,8 @@ var DEFAULT_URLS = {
   // ----- Inventario Dugomotos (escritura de placa) -----
   invEscrPlaca: 'https://defaultcf4c3cc039c24ec1a7440591e622df.9d.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/6b46cb08eefc446d98d18fae55135403/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=EzxjURemuE9hRrBPX76WVyuvzs3HuED2dIu5WGj-MVo',
 
-   // Inventario (BD_Inv)
+  // Inventario (BD_Inv) — SIN USO en el código actual. La escritura
+  // de placa va por `invEscrPlaca` (ver apiInvEscribirPlaca en api.js).
   invW: 'https://defaultcf4c3cc039c24ec1a7440591e622df.9d.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/10/workflows/e763ae9faf77441cb0b4af6e0cc8b4bb/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=MU9Xkg2P4jgSTcfSePS1S0jAUNDRxZJyxZM4z12-kpY',
    
   // ----- Pendientes de implementar -----

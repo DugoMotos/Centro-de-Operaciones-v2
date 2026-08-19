@@ -208,24 +208,24 @@ function aRegView() {
   if (mChasis && mChasis.length > 6) {
     var head = mChasis.substring(0, mChasis.length - 6);
     var tail = mChasis.substring(mChasis.length - 6);
-    mChasisDisplay = '<span style="opacity:0.6">' + head + '</span><span style="color:#fff;font-weight:700">' + tail + '</span>';
+    mChasisDisplay = '<span style="opacity:0.6">' + esc(head) + '</span><span style="color:#fff;font-weight:700">' + esc(tail) + '</span>';
   } else if (mChasis) {
-    mChasisDisplay = '<span style="color:#fff;font-weight:700">' + mChasis + '</span>';
+    mChasisDisplay = '<span style="color:#fff;font-weight:700">' + esc(mChasis) + '</span>';
   }
 
   var h = '<div style="margin-bottom:14px">';
   h += '<div style="background:' + marcaBg + ';border-radius:8px 8px 0 0;padding:14px 18px;position:relative">';
-  h += '<div style="font-size:9px;font-weight:600;letter-spacing:2px;color:rgba(255,255,255,0.6);margin-bottom:4px">' + marca + '</div>';
-  h += '<div style="font-size:20px;font-weight:700;color:#fff;letter-spacing:0.5px">' + mLinea + ' ' + mRef + '</div>';
+  h += '<div style="font-size:9px;font-weight:600;letter-spacing:2px;color:rgba(255,255,255,0.6);margin-bottom:4px">' + esc(marca) + '</div>';
+  h += '<div style="font-size:20px;font-weight:700;color:#fff;letter-spacing:0.5px">' + esc(mLinea) + ' ' + esc(mRef) + '</div>';
   var subDetails = [];
-  if (mModelo) subDetails.push('Modelo ' + mModelo);
-  if (mColor) subDetails.push(mColor);
+  if (mModelo) subDetails.push('Modelo ' + esc(mModelo));
+  if (mColor) subDetails.push(esc(mColor));
   if (subDetails.length) h += '<div style="font-size:11px;color:rgba(255,255,255,0.75);margin-top:2px">' + subDetails.join(' · ') + '</div>';
-  if (mCodigoBarras) h += '<div style="position:absolute;top:14px;right:18px;font-family:var(--fm);font-size:12px;font-weight:600;padding:4px 10px;border-radius:4px;background:rgba(255,255,255,0.15);color:#fff">' + mCodigoBarras + '</div>';
+  if (mCodigoBarras) h += '<div style="position:absolute;top:14px;right:18px;font-family:var(--fm);font-size:12px;font-weight:600;padding:4px 10px;border-radius:4px;background:rgba(255,255,255,0.15);color:#fff">' + esc(mCodigoBarras) + '</div>';
   h += '</div>';
   h += '<div style="background:var(--sf);border-radius:0 0 8px 8px;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;font-size:11px;border:0.5px solid var(--bd);border-top:none">';
   h += '<div style="color:var(--tm)">Chasis: <span style="font-family:var(--fm)">' + mChasisDisplay + '</span></div>';
-  if (mUbicacion) h += '<div style="color:' + marcaAccent + ';font-weight:600">' + mUbicacion + '</div>';
+  if (mUbicacion) h += '<div style="color:' + marcaAccent + ';font-weight:600">' + esc(mUbicacion) + '</div>';
   h += '</div>';
   h += '</div>';
 
@@ -239,7 +239,7 @@ function aRegView() {
       var borderCls = isChosen ? 'var(--gn)' : 'var(--bd)';
       h += '<div style="padding:10px 12px;border:.5px solid ' + borderCls + ';border-radius:6px;margin-bottom:6px;cursor:pointer;background:' + (isChosen ? 'var(--gnl)' : 'transparent') + '" onclick="aElegir(\'' + r.id + '\')">';
       h += '<div style="display:flex;align-items:center;justify-content:space-between">';
-      h += '<div style="font-size:13px;font-weight:600">' + (r.proceso || '—') + '</div>';
+      h += '<div style="font-size:13px;font-weight:600">' + esc(r.proceso || '—') + '</div>';
       h += '<span class="badge" style="background:var(--yll);color:var(--yld);font-size:9px">Pendiente</span>';
       h += '</div>';
       h += '</div>';
@@ -253,24 +253,24 @@ function aRegView() {
     ejecutadas.forEach(function(r) {
       h += '<div style="padding:8px 12px;border:.5px solid var(--bd);border-radius:6px;margin-bottom:4px;background:rgba(29,158,117,0.04);opacity:0.8">';
       h += '<div style="display:flex;align-items:center;justify-content:space-between">';
-      h += '<div style="font-size:12px;color:#ccc">' + (r.proceso || '—') + '</div>';
+      h += '<div style="font-size:12px;color:#ccc">' + esc(r.proceso || '—') + '</div>';
       h += '<span class="badge" style="background:var(--gnl);color:var(--gnd);font-size:9px">Ejecutada</span>';
       h += '</div>';
-      if (r.ejecuto) h += '<div style="font-size:10px;color:var(--tm);margin-top:3px">Por ' + r.ejecuto + '</div>';
+      if (r.ejecuto) h += '<div style="font-size:10px;color:var(--tm);margin-top:3px">Por ' + esc(r.ejecuto) + '</div>';
       h += '</div>';
     });
   }
 
   if (aChosen) {
     h += '<div style="margin-top:14px;padding:14px;background:var(--bg);border:.5px solid var(--gn);border-radius:8px">';
-    h += '<div class="lbl" style="color:var(--gnd);margin-bottom:8px">Registrar: ' + aChosen.proceso + '</div>';
+    h += '<div class="lbl" style="color:var(--gnd);margin-bottom:8px">Registrar: ' + esc(aChosen.proceso) + '</div>';
 
     h += '<div style="margin-bottom:8px"><label class="lbl">Técnico que ejecutó</label>';
     h += '<select class="inp" onchange="aResp=this.value">';
     h += '<option value="">— Seleccionar —</option>';
     var opts = ALL_R || [];
     opts.forEach(function(o) {
-      h += '<option value="' + o + '"' + (aResp === o ? ' selected' : '') + '>' + o + '</option>';
+      h += '<option value="' + esc(o) + '"' + (aResp === o ? ' selected' : '') + '>' + esc(o) + '</option>';
     });
     h += '</select></div>';
 

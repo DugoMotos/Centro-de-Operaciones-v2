@@ -1,0 +1,18 @@
+{
+  "name": "centro-de-operaciones-v2",
+  "version": "2.1.0",
+  "description": "Centro de Operaciones Dugomotos — gestión del procedimiento de venta y alistamiento de motocicletas",
+  "private": true,
+  "scripts": {
+    "lint": "eslint js/",
+    "lint:fix": "eslint js/ --fix",
+    "check:dupes": "node scripts/check-duplicados.js",
+    "smoke": "node scripts/smoke-test.js",
+    "verify": "npm run check && npm run check:dupes && npm run lint && npm run smoke",
+    "check": "node --check js/config.js && node --check js/data.js && node --check js/utils.js && node --check js/state.js && node --check js/api.js && node --check js/modules/negocios.js && node --check js/modules/procedimiento.js && node --check js/modules/alistamiento.js && node --check js/modules/plan.js && node --check js/modules/home.js && node --check js/modules/planilla.js && node --check js/modules/config.js && node --check js/app.js",
+    "serve": "npx --yes serve ."
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0"
+  }
+}

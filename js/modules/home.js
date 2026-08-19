@@ -254,8 +254,8 @@ function renderHome() {
       var isCritical = a.dias >= 60;
       h += '<div class="home-alert" onclick="setMain(\'negocios\')">';
       h += '<div class="home-alert-dot' + (isCritical ? ' critical' : '') + '"></div>';
-      h += '<div class="home-alert-code">' + a.code + '</div>';
-      h += '<div class="home-alert-desc">' + a.desc + '</div>';
+      h += '<div class="home-alert-code">' + esc(a.code) + '</div>';
+      h += '<div class="home-alert-desc">' + esc(a.desc) + '</div>';
       h += '<div class="home-alert-days' + (isCritical ? ' critical' : '') + '">' + a.dias + 'd</div>';
       h += '</div>';
     });
@@ -275,9 +275,9 @@ function renderHome() {
   if (actividadReciente.length) {
     actividadReciente.forEach(function(a) {
       h += '<div class="home-activity">';
-      h += '<div class="home-activity-avatar" style="background:' + homeAvatarColor(a.quien) + '">' + homeInitials(a.quien) + '</div>';
+      h += '<div class="home-activity-avatar" style="background:' + homeAvatarColor(a.quien) + '">' + esc(homeInitials(a.quien)) + '</div>';
       h += '<div class="home-activity-desc">';
-      h += '<strong>' + a.quien + '</strong> completó "' + a.que + '" en <span class="home-activity-code">' + a.code + '</span>';
+      h += '<strong>' + esc(a.quien) + '</strong> completó "' + esc(a.que) + '" en <span class="home-activity-code">' + esc(a.code) + '</span>';
       h += '</div>';
       h += '<div class="home-activity-time">' + a.cuando + '</div>';
       h += '</div>';

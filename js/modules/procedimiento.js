@@ -91,7 +91,8 @@ function renderProc() {
   }
 
   if (pActive === '__view__') {
-    var h = '<button style="font-size:12px;color:var(--tm);background:none;border:none;cursor:pointer;margin-bottom:10px" onclick="pActive=null;pMode=\'\';render()">← Volver</button>';
+    // sin `var`: `h` ya está declarada arriba en esta misma función
+    h = '<button style="font-size:12px;color:var(--tm);background:none;border:none;cursor:pointer;margin-bottom:10px" onclick="pActive=null;pMode=\'\';render()">← Volver</button>';
     h += pFlujoView();
     return h;
   }
@@ -161,7 +162,7 @@ function pFlujoView() {
    ============================================================ */
 function pTrackView() {
   if (pLoading) {
-    return '<div style="text-align:center;padding:40px"><div style="font-size:28px;margin-bottom:10px">⏳</div><div style="font-size:14px;font-weight:600">Consultando SharePoint...</div><div style="font-size:11px;color:var(--tm);margin-top:4px">Verificando actividades para ' + pActive + '</div><button class="btn btn-o" style="max-width:200px;margin:16px auto 0" onclick="pLoading=false;render()">Cancelar</button></div>';
+    return '<div style="text-align:center;padding:40px"><div style="font-size:28px;margin-bottom:10px">⏳</div><div style="font-size:14px;font-weight:600">Consultando SharePoint...</div><div style="font-size:11px;color:var(--tm);margin-top:4px">Verificando actividades para ' + esc(pActive) + '</div><button class="btn btn-o" style="max-width:200px;margin:16px auto 0" onclick="pLoading=false;render()">Cancelar</button></div>';
   }
 
   var md = pMotos[pActive];
@@ -208,19 +209,19 @@ function pTrackView() {
     h += '<div style="background:' + marcaBg + ';border-radius:10px;padding:12px 14px;color:#fff;margin-bottom:8px">';
     h += '<div class="flex fxc fxb">';
     h += '<div style="flex:1">';
-    h += '<div style="font-size:11px;font-weight:600;opacity:.7;text-transform:uppercase;letter-spacing:1px">' + mMarca + '</div>';
-    h += '<div style="font-size:18px;font-weight:800;margin-top:2px">' + (info.linea || '') + ' ' + (info.referencia || '') + '</div>';
+    h += '<div style="font-size:11px;font-weight:600;opacity:.7;text-transform:uppercase;letter-spacing:1px">' + esc(mMarca) + '</div>';
+    h += '<div style="font-size:18px;font-weight:800;margin-top:2px">' + esc(info.linea || '') + ' ' + esc(info.referencia || '') + '</div>';
     var details = [];
-    if (info.modelo) details.push('Modelo ' + info.modelo);
+    if (info.modelo) details.push('Modelo ' + esc(info.modelo));
     if (details.length) h += '<div style="font-size:11px;opacity:.8;margin-top:2px">' + details.join(' · ') + '</div>';
     h += '</div>';
     h += '<div style="text-align:right">';
-    h += '<div style="font-family:var(--fm);font-size:14px;font-weight:700;background:rgba(255,255,255,.2);padding:4px 10px;border-radius:6px">' + pActive + '</div>';
-    if (mColor) h += '<div style="display:flex;align-items:center;gap:4px;justify-content:flex-end;margin-top:6px"><div style="width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid rgba(255,255,255,.4)"></div><span style="font-size:10px;font-weight:600;opacity:.9">' + mColor + '</span></div>';
+    h += '<div style="font-family:var(--fm);font-size:14px;font-weight:700;background:rgba(255,255,255,.2);padding:4px 10px;border-radius:6px">' + esc(pActive) + '</div>';
+    if (mColor) h += '<div style="display:flex;align-items:center;gap:4px;justify-content:flex-end;margin-top:6px"><div style="width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid rgba(255,255,255,.4)"></div><span style="font-size:10px;font-weight:600;opacity:.9">' + esc(mColor) + '</span></div>';
     h += '</div></div></div>';
   } else {
     h += '<div style="background:var(--sf);border-radius:10px;padding:12px 14px;margin-bottom:8px">';
-    h += '<div style="font-family:var(--fm);font-size:20px;font-weight:800">' + pActive + '</div>';
+    h += '<div style="font-family:var(--fm);font-size:20px;font-weight:800">' + esc(pActive) + '</div>';
     h += '<div style="font-size:11px;color:var(--tm);margin-top:2px">Sin datos de SharePoint</div>';
     h += '</div>';
   }
@@ -424,12 +425,12 @@ function pFindTramStep(step) {
   }
   // Matching específico para Contabilidad (actividad #12)
   if (step.c === 'con' && step.actNum === 12) {
-    for (var ti = 0; ti < TRAM_STEPS.length; ti++) {
+    for (ti = 0; ti < TRAM_STEPS.length; ti++) {
       if (TRAM_STEPS[ti].id === 's12') return TRAM_STEPS[ti];
     }
   }
    if (step.c === 'tra') {
-    for (var ti = 0; ti < TRAM_STEPS.length; ti++) {
+    for (ti = 0; ti < TRAM_STEPS.length; ti++) {
       var ts = TRAM_STEPS[ti];
       if ((step.t.indexOf('Verificar ítems') >= 0 && ts.id === 's01') ||
           (step.t.indexOf('Programar alistamientos') >= 0 && ts.id === 's02') ||
@@ -723,7 +724,7 @@ function pCheckStep(dayNum, stepIdx) {
 
   // ── Bloqueo LOCAL (dentro del área del usuario, comportamiento previo) ──
   var areaSteps = pUserArea ? day.steps.filter(function(s) { return s.c === pUserArea; }) : day.steps;
-  for (var i = 0; i < areaSteps.length; i++) {
+  for (i = 0; i < areaSteps.length; i++) {
     var oi = day.steps.indexOf(areaSteps[i]);
     var pk = dayNum + '_' + oi;
     if (oi === stepIdx) break;

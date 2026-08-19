@@ -55,8 +55,15 @@ Los scripts se cargan en este orden en `index.html`:
 
 ### `js/config.js`
 - Define `DEFAULT_URLS` con todas las URLs de Power Automate.
+- Define `SUPABASE_URL`, `SUPABASE_ANON_KEY` y `SUPABASE_TABLES`.
 - Define las claves de localStorage (`SK_A`, `SK_P`, etc.).
 - Función `getUrl(key)` que combina overrides del usuario + defaults.
+- Función `supabaseReady()` que verifica si Supabase está configurado.
+
+> **Nota sobre secretos:** ni las URLs de Power Automate ni la anon key
+> de Supabase son secretas — viajan en el código del navegador. La
+> seguridad la dan las RLS Policies de Supabase y la validación dentro
+> de cada flow.
 
 ### `js/data.js`
 - Constantes del negocio: áreas, días, pasos, actividades, responsables.
@@ -67,7 +74,10 @@ Los scripts se cargan en este orden en `index.html`:
 - Helpers genéricos sin lógica de negocio:
   - `ls(k)` / `sv(k, v)`: localStorage
   - `iD()`, `fD()`, `fT()`, `fIso()`: formato de fechas
-  - `negParseFecha`, `negDiasDesde`, `negFmtFecha`: parseo robusto
+  - `negDiasDesde`, `negFmtFecha`: parseo de fechas de origen externo
+    (serial de Excel, ISO o DD/MM/AAAA) — compartidos por Negocios y Home
+  - `esc(s)`: escape de HTML — **obligatorio** para todo dato que venga de
+    SharePoint o Supabase y se interpole en un string de HTML
   - `toast(m, e)`: notificaciones
   - `chk`: ícono SVG de check
   - `negProgressColor`, `negNormTipo`, `negNormMarca`: helpers de Negocios
@@ -82,10 +92,18 @@ Los scripts se cargan en este orden en `index.html`:
 - Variables organizadas por módulo (`neg*`, `p*`, `a*`, `plan*`).
 
 ### `js/api.js`
-- **Capa única** de comunicación con Power Automate.
+- **Capa única** de comunicación con el exterior.
 - Todos los `fetch()` viven aquí, ningún módulo llama fetch directamente.
-- Funciones nombradas por intención: `apiTramConsultarMoto()`, `apiAvanceEscribir()`, etc.
-- Si Power Automate cambia la forma de recibir requests, se cambia aquí en un solo lugar.
+- Dos transportes de bajo nivel:
+  - `apiPost(url, body, timeout)` → Power Automate
+  - `apiSupabase(method, path, body, timeout)` → REST de Supabase
+- Encima, funciones nombradas por intención: `apiTramConsultarMoto()`,
+  `apiAvanceEscribir()`, `apiRegAlistCrear()`, etc. Los módulos solo llaman estas.
+- Si Power Automate o Supabase cambian, se cambia aquí en un solo lugar.
+
+> **Migración en curso:** el registro de actividades pasó de SharePoint a
+> Supabase. Las URLs de los flows viejos siguen en `config.js` marcadas
+> como LEGACY para permitir rollback rápido.
 
 ### `js/app.js`
 - Orquestador del app:
@@ -101,10 +119,18 @@ Los scripts se cargan en este orden en `index.html`:
 
 Cada módulo es **autocontenido**: tiene sus propias funciones de render y manejo de estado.
 
+### `js/modules/home.js`
+- `renderHome()`: dashboard de inicio — saludo según la hora, KPIs y actividad reciente.
+- **No hace fetch propio.** Lee datos que otros módulos ya cargaron
+  (`negMotos`, `negAvances`, `planData`), así que muestra KPIs vacíos
+  hasta que el usuario visite Negocios o Plan.
+- Pendiente: el nombre de usuario está fijo en el código hasta que exista login.
+
 ### `js/modules/negocios.js`
 - `renderNegocios()`: tabla de motos con filtros, ordenamiento, progress bars.
 - `negSync()`: carga datos desde SharePoint.
 - `negSort(key)`: ordena por columna.
+- `negGetScopeActs()` / `negFirstPending()`: calculan la actividad actual de cada moto.
 
 ### `js/modules/procedimiento.js`
 - El módulo más grande (~660 líneas).
@@ -121,8 +147,17 @@ Cada módulo es **autocontenido**: tiene sus propias funciones de render y manej
 - `aBuscar()`, `aGuardar()`, `aExpCSV()`: acciones.
 
 ### `js/modules/plan.js`
-- `renderPlan()`: vista de tabla BD_Plan con filtros.
+- `renderPlan()`: tarjeta expandible por moto con sus actividades.
 - `planSync()`: carga desde SharePoint.
+- `planSetPresetRango()`, `planSetFechaDesde/Hasta()`: filtros por rango de fechas.
+
+### `js/modules/planilla.js`
+- `renderPlanilla()`: reporte diario **imprimible** de alistamientos programados.
+- Bloques fijos por marca (HERO, SYM, BAJAJ) siempre visibles, aunque estén vacíos.
+- Orden fijo de procesos: Alistamiento → Marcación → Defensas → GPS → Placa.
+- `planillaSync()`: consulta `registro_alistamientos` por `fecha_programacion`
+  y hace merge con BD_Tramites.
+- Se auto-sincroniza al entrar a la pestaña (ver `setMain` en `app.js`).
 
 ### `js/modules/config.js`
 - `renderConfig()`: pantalla de configuración con secciones por módulo.
@@ -175,7 +210,7 @@ Variables globales declaradas en `state.js`. Por ejemplo:
 2. CSS se carga (paralelo).
 3. Scripts se cargan en orden (secuencial, definido por las tags `<script>`).
 4. `app.js` ejecuta `init()` que llama a `render()`.
-5. `render()` mira la variable `main` (default: `'proc'`) y renderiza.
+5. `render()` mira la variable `main` (default: `'home'`, definido en `state.js`) y renderiza.
 
 **Usuario clickea "Negocios" en sidebar:**
 1. Se ejecuta `setMain('negocios')` (en `app.js`).
@@ -201,6 +236,22 @@ Variables globales declaradas en `state.js`. Por ejemplo:
 4. Agregar el link en `index.html` dentro del sidebar.
 5. Agregar el case en `render()` dentro de `js/app.js`.
 6. Si necesita Power Automate: agregar URL en `js/config.js` y función en `js/api.js`.
+
+---
+
+## Reglas que hay que respetar al editar
+
+1. **Todo dato externo va con `esc()`.** Cualquier valor que venga de
+   SharePoint o Supabase y se meta en un string de HTML tiene que pasar por
+   `esc()`. Sin eso, un cliente llamado `Motos & Cía` rompe el render.
+   El contenido de `data.js` (los pasos del procedimiento) es propio y
+   confiable — ese no se escapa.
+2. **Ninguna función se define dos veces.** Como son scripts clásicos con
+   globales compartidas, una función repetida en dos archivos hace que la
+   última cargada pise a la anterior **sin ningún error**. Corré ESLint.
+3. **Ningún módulo llama `fetch` directo.** Va todo por `api.js`.
+4. **Subir el `?v=` de `index.html` en cada deploy**, o el equipo se queda
+   con la versión cacheada.
 
 ---
 

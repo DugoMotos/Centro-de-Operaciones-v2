@@ -192,11 +192,11 @@ function renderPlan() {
   h += '<div style="display:flex;align-items:center;gap:6px">';
   h += '<span style="font-size:10px;color:var(--tm);letter-spacing:0.5px;text-transform:uppercase;font-weight:600">Desde</span>';
   h += '<input type="date" class="inp" style="width:130px;height:32px;padding:4px 8px;font-size:11px" ' +
-       'value="' + (planFechaDesde || '') + '" ' +
+       'value="' + esc(planFechaDesde || '') + '" ' +
        'onchange="planSetFechaDesde(this.value)">';
   h += '<span style="font-size:10px;color:var(--tm);letter-spacing:0.5px;text-transform:uppercase;font-weight:600">Hasta</span>';
   h += '<input type="date" class="inp" style="width:130px;height:32px;padding:4px 8px;font-size:11px" ' +
-       'value="' + (planFechaHasta || '') + '" ' +
+       'value="' + esc(planFechaHasta || '') + '" ' +
        'onchange="planSetFechaHasta(this.value)">';
   if (planFechaDesde || planFechaHasta) {
     h += '<button style="background:rgba(226,75,74,0.15);color:#F26F6E;border:none;border-radius:4px;width:24px;height:24px;cursor:pointer;font-size:14px;line-height:1" ' +
@@ -218,20 +218,20 @@ function renderPlan() {
   h += '<select class="inp" style="width:150px;height:32px;padding:4px 8px;font-size:11px" onchange="planFilterProc=this.value;render()">' +
        '<option value="">Todos los procesos</option>';
   uniqueProcesos.forEach(function(p) {
-    h += '<option value="' + p + '"' + (planFilterProc === p ? ' selected' : '') + '>' + p + '</option>';
+    h += '<option value="' + esc(p) + '"' + (planFilterProc === p ? ' selected' : '') + '>' + esc(p) + '</option>';
   });
   h += '</select>';
 
   h += '<select class="inp" style="width:130px;height:32px;padding:4px 8px;font-size:11px" onchange="planFilterEstado=this.value;render()">' +
        '<option value="">Todos los estados</option>';
   uniqueEstados.forEach(function(e) {
-    h += '<option value="' + e + '"' + (planFilterEstado === e ? ' selected' : '') + '>' + e + '</option>';
+    h += '<option value="' + esc(e) + '"' + (planFilterEstado === e ? ' selected' : '') + '>' + esc(e) + '</option>';
   });
   h += '</select>';
 
   h += '<input class="inp" style="width:180px;height:32px;padding:4px 8px;font-size:11px" ' +
        'placeholder="Buscar código o proceso" ' +
-       'value="' + (planFilter || '') + '" oninput="planFilter=this.value;render()">';
+       'value="' + esc(planFilter || '') + '" oninput="planFilter=this.value;render()">';
 
   if (planFilter || planFilterProc || planFilterEstado) {
     h += '<button class="btn" style="width:auto;padding:0 12px;height:32px;font-size:11px" ' +
@@ -341,9 +341,9 @@ function planRenderMotoCard(code, actividades) {
   h += '<div style="cursor:pointer" onclick="planToggle(\'' + code + '\')">';
   h += '<div style="background:' + marcaBg + ';padding:10px 14px;display:flex;align-items:center;justify-content:space-between">';
   h += '<div style="display:flex;align-items:center;gap:12px">';
-  h += '<span style="font-family:var(--fm);font-size:12px;font-weight:600;background:rgba(255,255,255,0.15);color:#fff;padding:4px 10px;border-radius:4px">' + code + '</span>';
-  if (marca) h += '<span style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,0.7)">' + marca + '</span>';
-  if (linea || ref) h += '<span style="font-size:13px;color:#fff;font-weight:600">' + (linea + ' ' + ref).trim() + '</span>';
+  h += '<span style="font-family:var(--fm);font-size:12px;font-weight:600;background:rgba(255,255,255,0.15);color:#fff;padding:4px 10px;border-radius:4px">' + esc(code) + '</span>';
+  if (marca) h += '<span style="font-size:10px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,0.7)">' + esc(marca) + '</span>';
+  if (linea || ref) h += '<span style="font-size:13px;color:#fff;font-weight:600">' + esc((linea + ' ' + ref).trim()) + '</span>';
   h += '</div>';
   h += '<div style="display:flex;align-items:center;gap:12px">';
   var statusColor = completo ? '#6EDA92' : (ejecutadas > 0 ? '#F5C572' : 'rgba(255,255,255,0.7)');
@@ -354,8 +354,8 @@ function planRenderMotoCard(code, actividades) {
 
   // Barra inferior con chasis completo y ubicación
   h += '<div style="background:rgba(0,0,0,0.15);padding:6px 14px;display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.6)">';
-  h += '<div>Chasis: <span style="font-family:var(--fm);color:#fff">' + (chasis || code) + '</span></div>';
-  if (ubicacion) h += '<div>📍 ' + ubicacion + '</div>';
+  h += '<div>Chasis: <span style="font-family:var(--fm);color:#fff">' + esc(chasis || code) + '</span></div>';
+  if (ubicacion) h += '<div>📍 ' + esc(ubicacion) + '</div>';
   h += '</div>';
   h += '</div>';
 
@@ -379,14 +379,14 @@ function planRenderMotoCard(code, actividades) {
       h += '<div>';
       h += '<div style="display:flex;align-items:center;gap:8px">';
       h += '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + procColor + '"></span>';
-      h += '<span style="font-size:12px;color:var(--tx);font-weight:500">' + r.proceso + '</span>';
+      h += '<span style="font-size:12px;color:var(--tx);font-weight:500">' + esc(r.proceso) + '</span>';
       h += '<span style="font-size:10px;padding:2px 6px;border-radius:3px;background:' + tagBg + ';color:' + tagColor + ';font-weight:600">' + tagText + '</span>';
       h += '</div>';
 
       var detalles = [];
       detalles.push('Programada: ' + planFmtFechaHora(r.fecha));
       if (isEjec) {
-        if (r.ejecuto) detalles.push('Por: ' + r.ejecuto);
+        if (r.ejecuto) detalles.push('Por: ' + esc(r.ejecuto));
         if (r.fecha_ejecucion) detalles.push('Ejecutada: ' + planFmtFechaHora(r.fecha_ejecucion));
       }
       h += '<div style="font-size:10px;color:var(--tm);margin-top:3px;margin-left:16px">' + detalles.join(' · ') + '</div>';
