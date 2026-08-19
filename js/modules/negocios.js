@@ -17,13 +17,29 @@
    - Columna Código sticky (se queda a la izquierda al scroll horizontal)
    ============================================================ */
 
-/* Scope de manuales Trámites + Contabilidad ordenadas por 'orden' */
+/* ============================================================
+   Scope del % de avance
+   ============================================================
+   Actividades que cuentan para la barra de progreso, ordenadas
+   por `orden`.
+
+   Desde 2026-08-19 incluye Logística: sus actividades de arranque
+   (manifiestos e improntas) son parte real del proceso y antes
+   quedaban invisibles en el avance.
+
+   ⚠ Al sumar Logística y las 6 actividades de arranque, el
+   denominador pasó de 29 a 35. El % de las motos en curso baja
+   respecto de lo que mostraba antes — es esperado, no un error:
+   ahora se mide contra el proceso completo.
+   ============================================================ */
+var NEG_AREAS_SCOPE = ['Trámites', 'Contabilidad', 'Logística'];
+
 var _negScopeCache = null;
 function negGetScopeActs() {
   if (_negScopeCache) return _negScopeCache;
   _negScopeCache = ACTIVIDADES_TRAM
     .filter(function(a) {
-      return a.responsable === 'Trámites' || a.responsable === 'Contabilidad';
+      return NEG_AREAS_SCOPE.indexOf(a.responsable) >= 0;
     })
     .slice()
     .sort(function(a, b) { return a.orden - b.orden; });

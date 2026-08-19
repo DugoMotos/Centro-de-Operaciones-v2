@@ -251,6 +251,55 @@ Variables globales declaradas en `state.js`. Por ejemplo:
 
 ---
 
+## Actividades, identidad y bloqueos
+
+### `actividad_num` es inmutable
+
+`registro_actividades` apunta a `actividad_num`. **Nunca se renumera**: si lo
+cambiás, el histórico queda apuntando a otra cosa. Las actividades nuevas
+toman el siguiente número libre. El reordenamiento va **siempre** por `orden`.
+
+`orden` está espaciado de 10 en 10 para poder insertar en el medio sin
+reordenar todo.
+
+### Doble fuente de verdad (ojo acá)
+
+| | `js/data.js` | Supabase `catalogo_actividades` |
+|---|---|---|
+| Qué se pinta | ✅ manda | ❌ no se lee |
+| Qué se bloquea | ✅ manda | ❌ no se lee |
+| Dónde se registra | — | ✅ vía `registro_actividades` |
+
+`apiCatalogoConsultar()` existe en `api.js` pero **ningún módulo la llama**.
+Consecuencia práctica: **tocar solo la base no cambia nada en pantalla**, y
+los dos lados hay que mantenerlos sincronizados a mano. Así apareció el bug
+de la actividad 38 (Trámites en un lado, Logística en el otro).
+
+Si algún día se quiere que el catálogo maneje el proceso de verdad, el orden
+es: cablear `apiCatalogoConsultar` → eliminar `ACTIVIDADES_TRAM` → recién ahí
+mover las dependencias a la base.
+
+### Bloqueos entre actividades
+
+Cada paso de `DAYS` declara de qué depende:
+
+```js
+{ t: 'Adjuntar improntas al manifiesto', actNum: 1, requiere: [47] }
+```
+
+Sin `requiere`, no espera a nadie — eso es lo que permite que áreas distintas
+trabajen en paralelo. Lo resuelve `pCheckStep` en `procedimiento.js`.
+
+Hay además un bloqueo **secuencial local**: dentro de un mismo día y de la
+misma área, los pasos se completan en orden. Es independiente de `requiere`.
+
+> ⚠ Al declarar una dependencia, cuidado con los ciclos. No bloquees
+> "Solicitar factura de venta" (11) esperando "Facturar motocicleta" (12):
+> Contabilidad no puede facturar hasta que Trámites solicite. La dependencia
+> va en el paso *siguiente* (15).
+
+---
+
 ## Reglas que hay que respetar al editar
 
 1. **Todo dato externo va con `esc()`.** Cualquier valor que venga de

@@ -106,9 +106,9 @@ var DAYS = [
     title: 'Facturación',
     desc: 'Recepción de facturas de compra, registro de chasis y estimación de llegada',
     steps: [
-      { c: 'con', t: 'Recibir factura de compra', d: 'Las marcas envían las facturas de compra por correo electrónico. Contabilidad las recibe y verifica.', act: 'Revisar correo → Descargar facturas de compra', pre: 'Pedido en etapa de facturación (Día 1)', tp: 'exec' },
-      { c: 'con', t: 'Imprimir factura de compra', d: 'Imprimir las facturas recibidas y separarlas por motocicleta para distribución.', act: 'Imprimir facturas → Separar por moto', pre: 'Facturas recibidas por correo', tp: 'exec' },
-      { c: 'con', t: 'Entregar facturas a trámites', d: 'Entregar las facturas impresas al área de trámites en la carpeta designada de facturas próximas en llegar.', act: 'Ubicar en carpeta de facturas → Entregar a trámites', doc: 'Carpeta de facturas / próximas en llegar', pre: 'Facturas impresas y separadas', tp: 'exec' },
+      { c: 'con', t: 'Recibir factura de compra', d: 'Las marcas envían las facturas de compra por correo electrónico. Contabilidad las recibe y verifica.', act: 'Revisar correo → Descargar facturas de compra', pre: 'Pedido en etapa de facturación (Día 1)', tp: 'exec', actNum: 42 },
+      { c: 'con', t: 'Imprimir factura de compra', d: 'Imprimir las facturas recibidas y separarlas por motocicleta para distribución.', act: 'Imprimir facturas → Separar por moto', pre: 'Facturas recibidas por correo', tp: 'exec', actNum: 43 },
+      { c: 'con', t: 'Entregar facturas a trámites', d: 'Entregar las facturas impresas al área de trámites en la carpeta designada de facturas próximas en llegar.', act: 'Ubicar en carpeta de facturas → Entregar a trámites', doc: 'Carpeta de facturas / próximas en llegar', pre: 'Facturas impresas y separadas', tp: 'exec', actNum: 44 },
       { c: 'inv', t: 'Ingresar # chasis al inventario', d: 'Cuando el pedido pasa a facturación, la marca comparte los números de chasis. Registrar cada chasis en la base de datos.', act: 'BD Inventario → Columna chasis → Ingresar número por moto', doc: 'BD Inventario / Excel', pre: 'Marca compartió números de chasis', tp: 'reg' },
       { c: 'inv', t: 'Ingresar fecha de facturación', d: 'Registrar la fecha de facturación de cada motocicleta en el inventario.', act: 'BD Inventario → Columna fecha facturación → Registrar', doc: 'BD Inventario / Excel', pre: 'Chasis registrados', tp: 'reg' },
       { c: 'inv', t: 'Estimar tiempo de llegada', d: 'Con base en la experiencia y tiempos del distribuidor, estimar cuándo llegarán las motocicletas.', act: 'Consultar historial → Estimar fecha → Registrar', doc: 'Archivo de llegada de motos', pre: 'Fecha de facturación registrada', tp: 'reg' }
@@ -124,10 +124,10 @@ var DAYS = [
       { c: 'log', t: 'Consignar novedades', d: 'Registrar cualquier novedad encontrada durante la inspección en el archivo de garantías.', act: 'Archivo Garantías → Registrar novedades por moto', doc: 'Garantías recepción / Excel', pre: 'Inspección visual completada', tp: 'reg' },
       { c: 'log', t: 'Informar novedades en DataPro', d: 'Reportar las novedades por el enlace de DataPro para gestionar garantías con la marca.', act: 'DataPro → Enlace novedades → Reportar', pre: 'Novedades registradas en archivo', tp: 'exec' },
       { c: 'inv', t: 'Seguimiento a novedades', d: 'Desde inventario, monitorear el estado de las novedades y hacer seguimiento hasta resolución.', act: 'Revisar archivo Garantías → Dar seguimiento → Actualizar estado', doc: 'Garantías recepción / Excel', pre: 'Novedades reportadas en DataPro por logística', tp: 'exec' },
-      { c: 'log', t: 'Entregar manifiestos a trámites', d: 'Entregar los documentos de manifiesto de cada moto (con certificado de gases) al área de trámites.', act: 'Organizar manifiestos por moto → Entregar a trámites', doc: 'Carpeta de manifiestos', pre: 'Motos recibidas e inspeccionadas', tp: 'exec' },
-      { c: 'log', t: 'Obtener improntas de motos nuevas', d: 'Tomar las improntas de cada moto nueva de manera inmediata. Es requisito del tránsito para solicitar documentos.', act: 'Tomar improntas de cada moto nueva', pre: 'Motos recibidas en concesionario', tp: 'exec' },
-      { c: 'log', t: 'Entregar improntas a trámites', d: 'Entregar las improntas obtenidas para que trámites las adjunte en los manifiestos.', act: 'Entregar improntas organizadas por moto a trámites', pre: 'Improntas tomadas de todas las motos', tp: 'exec' },
-      { c: 'tra', t: 'Adjuntar improntas en manifiesto', d: 'Pegar las improntas de cada moto en su respectivo manifiesto. Requisito obligatorio del tránsito.', act: 'Pegar impronta en manifiesto correspondiente → Verificar', pre: 'Manifiestos e improntas recibidos de logística', tp: 'exec', actNum: 1 },
+      { c: 'log', t: 'Entregar manifiestos a trámites', d: 'Entregar los documentos de manifiesto de cada moto (con certificado de gases) al área de trámites.', act: 'Organizar manifiestos por moto → Entregar a trámites', doc: 'Carpeta de manifiestos', pre: 'Motos recibidas e inspeccionadas', tp: 'exec', actNum: 45 },
+      { c: 'log', t: 'Obtener improntas de motos nuevas', d: 'Tomar las improntas de cada moto nueva de manera inmediata. Es requisito del tránsito para solicitar documentos.', act: 'Tomar improntas de cada moto nueva', pre: 'Motos recibidas en concesionario', tp: 'exec', actNum: 46 },
+      { c: 'log', t: 'Entregar improntas a trámites', d: 'Entregar las improntas obtenidas para que trámites las adjunte en los manifiestos.', act: 'Entregar improntas organizadas por moto a trámites', pre: 'Improntas tomadas de todas las motos', tp: 'exec', actNum: 47 },
+      { c: 'tra', t: 'Adjuntar improntas al manifiesto', d: 'Pegar las improntas de cada moto en su respectivo manifiesto. Requisito obligatorio del tránsito.', act: 'Pegar impronta en manifiesto correspondiente → Verificar', pre: 'Manifiestos e improntas recibidos de logística', tp: 'exec', actNum: 1, requiere: [47] },
       { c: 'inv', t: 'Recepción de motos en DataPro', d: 'Descargar las motos de la bodega virtual del fabricante a la del concesionario. Solo aplica para Hero.', act: 'DataPro → Recepción → Descargar motos a bodega concesionario', pre: 'Motos recibidas e inspeccionadas', tp: 'exec' },
       { c: 'inv', t: 'Ingresar fecha de llegada', d: 'Registrar la fecha de llegada real de cada motocicleta en el inventario.', act: 'BD Inventario → Columna fecha llegada → Registrar', doc: 'BD Inventario / Excel', pre: 'Recepción completada en DataPro', tp: 'reg' }
     ]
@@ -153,7 +153,7 @@ var DAYS = [
       { c: 'tra', t: 'Solicitar factura de venta', d: 'Solicitar a contabilidad. Horarios de entrega: 12pm y 4pm.', act: 'Preparar paquete → Entregar a contabilidad antes de 12pm o 4pm', pre: 'Plan de marca registrado', gate: 1, gl: 'Debe facturarse el mismo día para solicitar SOAT', tp: 'exec', actNum: 11 },
       { c: 'con', t: 'Facturar motocicleta', d: 'Contabilidad genera la factura de venta de la motocicleta.', act: 'Recibir paquete de trámites → Generar factura de venta', pre: 'Solicitud de factura recibida de trámites', tp: 'exec', actNum: 12 },
       { c: 'con', t: 'Registrar fecha facturación + recobros', d: 'Registrar fecha de facturación. En comentarios incluir los recobros del plan de marca.', act: 'Registrar fecha → Incluir recobros en comentarios → Actualizar archivo', doc: 'FV Contabilidad / Excel + Recobros plan marca / Excel', pre: 'Motocicleta facturada', tp: 'reg' },
-      { c: 'tra', t: 'Verificar plan de marca en factura', d: 'Verificar que los comentarios del plan de marca en la factura estén correctos y completos.', act: 'Abrir factura → Verificar comentarios plan de marca → Confirmar OK', pre: 'Factura emitida con recobros por contabilidad', tp: 'val', actNum: 15 },
+      { c: 'tra', t: 'Verificar plan de marca en factura', d: 'Verificar que los comentarios del plan de marca en la factura estén correctos y completos.', act: 'Abrir factura → Verificar comentarios plan de marca → Confirmar OK', pre: 'Factura emitida con recobros por contabilidad', tp: 'val', actNum: 15, requiere: [12] },
       { c: 'tra', t: 'Solicitar SOAT', d: 'Solicitar por WhatsApp con el tránsito. El SOAT debe activarse a las 12 de la noche.', act: 'WhatsApp tránsito → Solicitar SOAT → Mover a carpeta proceso SOAT', doc: 'Carpeta proceso de SOAT', pre: 'Plan de marca verificado en factura', tp: 'exec', actNum: 16 },
       { c: 'tra', t: 'Organizar paquete de venta', d: 'Reunir todos los documentos necesarios para matricular la motocicleta. Organizar en orden específico.', act: '1. Copia cédula → 2. Factura → 3. Empadronamiento → 4. Contrato mandato → 5. Formulario tránsito', pre: 'SOAT solicitado', tp: 'exec', actNum: 18 },
       { c: 'tra', t: 'Entregar paquetes para matricular', d: 'Entregar al tránsito separados: con impuestos y sin impuestos. Antes de las 6pm.', act: 'Separar paquetes con/sin impuestos → Entregar antes de 6pm', doc: 'Carpeta proceso de matrícula', pre: 'Paquete de venta organizado', gate: 1, gl: 'Entrega obligatoria antes de las 6pm', tp: 'exec', actNum: 19 }
@@ -233,41 +233,69 @@ var ALIST_OPTS = [
 ];
 
 /* ============================================================
-   CATÁLOGO DE ACTIVIDADES DE TRÁMITES
+   CATÁLOGO DE ACTIVIDADES REGISTRABLES
    ============================================================
-   Sincronizado con Supabase catalogo_actividades (manuales activas).
-   Campo `orden` permite reordenar sin cambiar `num` (identidad estable).
+   Espejo de Supabase catalogo_actividades — solo las MANUALES
+   activas. Las de tipo 'automatica' (las llena un flow) quedan
+   fuera a propósito: no son un clic de nadie y no deben contar
+   para el avance.
+
+   `num` es identidad inmutable: registro_actividades apunta ahí.
+   NUNCA se renumera. El reordenamiento va SIEMPRE por `orden`.
+
+   ⚠ Este arreglo hay que mantenerlo sincronizado a mano con
+   Supabase. La app todavía NO lee el catálogo desde la BD
+   (apiCatalogoConsultar existe pero nadie la llama), así que
+   ESTE archivo es el que manda para lo que se ve y se bloquea.
+
+   Última sincronización: 2026-08-19
+   (ver sql/2026-08-19-logistica-y-arranque.sql)
    ============================================================ */
 var ACTIVIDADES_TRAM = [
-  { num: '1',  orden: 10,  titulo: 'Adjuntar improntas al manifiesto',       responsable: 'Trámites' },
-  { num: '2',  orden: 20,  titulo: 'Revisar ítems del pedido',               responsable: 'Trámites' },
-  { num: '3',  orden: 30,  titulo: 'Programar alistamientos',                responsable: 'Trámites' },
-  { num: '4',  orden: 40,  titulo: 'Asignar manifiesto',                     responsable: 'Trámites' },
-  { num: '6',  orden: 60,  titulo: 'Solicitar preasignación de placa',       responsable: 'Trámites' },
-  { num: '8',  orden: 80,  titulo: 'Confirmar placa',                        responsable: 'Trámites' },
-  { num: '40', orden: 85,  titulo: 'Validar cotización DataPro',             responsable: 'Trámites' },
-  { num: '10', orden: 100, titulo: 'Consignar plan de marca',                responsable: 'Trámites' },
-  { num: '11', orden: 110, titulo: 'Solicitar factura de venta',             responsable: 'Trámites' },
-  { num: '12', orden: 120, titulo: 'Facturar motocicleta',                   responsable: 'Contabilidad' },
-  { num: '15', orden: 150, titulo: 'Revisar plan de marca en factura',       responsable: 'Trámites' },
-  { num: '16', orden: 160, titulo: 'Solicitar SOAT',                         responsable: 'Trámites' },
-  { num: '18', orden: 180, titulo: 'Organizar paquete para matricular',      responsable: 'Trámites' },
-  { num: '19', orden: 190, titulo: 'Entregar paquetes al tránsito',          responsable: 'Trámites' },
-  { num: '21', orden: 210, titulo: 'Verificar activación de SOAT',           responsable: 'Trámites' },
-  { num: '23', orden: 230, titulo: 'Imprimir SOAT',                          responsable: 'Trámites' },
-  { num: '24', orden: 240, titulo: 'Incluir SOAT en el paquete',             responsable: 'Trámites' },
-  { num: '25', orden: 250, titulo: '[1] Informar cliente SOAT OK',           responsable: 'Trámites' },
-  { num: '26', orden: 260, titulo: 'Verificar matrícula en RUNT',            responsable: 'Trámites' },
-  { num: '28', orden: 305, titulo: 'Activar garantía',                       responsable: 'Trámites' },
-  { num: '29', orden: 290, titulo: 'Revisar avance de alistamientos',        responsable: 'Trámites' },
-  { num: '30', orden: 300, titulo: 'Recibir matrícula y placa',              responsable: 'Trámites' },
-  { num: '32', orden: 320, titulo: 'Programar instalación de placa',         responsable: 'Trámites' },
-  { num: '33', orden: 330, titulo: '[2] Informar cliente matrícula OK',      responsable: 'Trámites' },
-  { num: '34', orden: 340, titulo: 'Revisar avance final de alistamientos',  responsable: 'Trámites' },
-  { num: '35', orden: 350, titulo: 'Informar asesores de crédito',           responsable: 'Trámites' },
-  { num: '36', orden: 360, titulo: 'Programar entrega',                      responsable: 'Trámites' },
-  { num: '37', orden: 370, titulo: '[3] Informar cliente moto OK',           responsable: 'Trámites' },
-  { num: '38', orden: 380, titulo: 'Confirmar entrega',                      responsable: 'Trámites' }
+  /* ── Arranque · Contabilidad (factura de compra) ───────── */
+  { num: '42', orden: 10,  titulo: 'Recibir factura de compra',              responsable: 'Contabilidad' },
+  { num: '43', orden: 20,  titulo: 'Imprimir factura de compra',             responsable: 'Contabilidad' },
+  { num: '44', orden: 30,  titulo: 'Entregar facturas a trámites',           responsable: 'Contabilidad' },
+
+  /* ── Arranque · Logística ──────────────────────────────────
+     En paralelo: NO dependen de que Contabilidad cierre nada.  */
+  { num: '45', orden: 40,  titulo: 'Entregar manifiestos a trámites',        responsable: 'Logística' },
+  { num: '46', orden: 50,  titulo: 'Obtener improntas de motos nuevas',      responsable: 'Logística' },
+  { num: '47', orden: 60,  titulo: 'Entregar improntas a trámites',          responsable: 'Logística' },
+
+  /* ── Habilitación de Trámites ──────────────────────────────
+     Espera a la 47 (ver `requiere` en DAYS).                   */
+  { num: '1',  orden: 70,  titulo: 'Adjuntar improntas al manifiesto',       responsable: 'Trámites' },
+
+  /* ── Resto del flujo ───────────────────────────────────── */
+  { num: '2',  orden: 80,  titulo: 'Revisar ítems del pedido',               responsable: 'Trámites' },
+  { num: '3',  orden: 90,  titulo: 'Programar alistamientos',                responsable: 'Trámites' },
+  { num: '4',  orden: 100, titulo: 'Asignar manifiesto',                     responsable: 'Trámites' },
+  { num: '6',  orden: 120, titulo: 'Solicitar preasignación de placa',       responsable: 'Trámites' },
+  { num: '8',  orden: 140, titulo: 'Confirmar placa',                        responsable: 'Trámites' },
+  { num: '40', orden: 150, titulo: 'Validar cotización DataPro',             responsable: 'Trámites' },
+  { num: '10', orden: 180, titulo: 'Consignar plan de marca',                responsable: 'Trámites' },
+  { num: '11', orden: 190, titulo: 'Solicitar factura de venta',             responsable: 'Trámites' },
+  { num: '12', orden: 200, titulo: 'Facturar motocicleta',                   responsable: 'Contabilidad' },
+  { num: '15', orden: 230, titulo: 'Revisar plan de marca en factura',       responsable: 'Trámites' },
+  { num: '16', orden: 240, titulo: 'Solicitar SOAT',                         responsable: 'Trámites' },
+  { num: '18', orden: 260, titulo: 'Organizar paquete para matricular',      responsable: 'Trámites' },
+  { num: '19', orden: 270, titulo: 'Entregar paquetes al tránsito',          responsable: 'Trámites' },
+  { num: '21', orden: 290, titulo: 'Verificar activación de SOAT',           responsable: 'Trámites' },
+  { num: '23', orden: 310, titulo: 'Imprimir SOAT',                          responsable: 'Trámites' },
+  { num: '24', orden: 320, titulo: 'Incluir SOAT en el paquete',             responsable: 'Trámites' },
+  { num: '25', orden: 330, titulo: '[1] Informar cliente SOAT OK',           responsable: 'Trámites' },
+  { num: '26', orden: 340, titulo: 'Verificar matrícula en RUNT',            responsable: 'Trámites' },
+  { num: '29', orden: 360, titulo: 'Revisar avance de alistamientos',        responsable: 'Trámites' },
+  { num: '30', orden: 370, titulo: 'Recibir matrícula y placa',              responsable: 'Trámites' },
+  { num: '28', orden: 380, titulo: 'Activar garantía',                       responsable: 'Trámites' },
+  { num: '32', orden: 400, titulo: 'Programar instalación de placa',         responsable: 'Trámites' },
+  { num: '33', orden: 410, titulo: '[2] Informar cliente matrícula OK',      responsable: 'Trámites' },
+  { num: '34', orden: 420, titulo: 'Revisar avance final de alistamientos',  responsable: 'Trámites' },
+  { num: '35', orden: 430, titulo: 'Informar asesores de crédito',           responsable: 'Trámites' },
+  { num: '36', orden: 440, titulo: 'Programar entrega',                      responsable: 'Trámites' },
+  { num: '37', orden: 450, titulo: '[3] Informar cliente moto OK',           responsable: 'Trámites' },
+  { num: '38', orden: 460, titulo: 'Confirmar entrega',                      responsable: 'Logística' }
 ];
 
 /* Total de actividades principales (sin las sub .1) */

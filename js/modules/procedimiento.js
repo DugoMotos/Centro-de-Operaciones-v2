@@ -688,43 +688,53 @@ function pCheckStep(dayNum, stepIdx) {
   var step = day.steps[stepIdx];
   if (!step) return;
 
-  // ── BLOQUEO GLOBAL: si el step tiene actNum, verificar que todas las
-  // actividades anteriores del catálogo (por orden) estén registradas ──
-  if (step.actNum && typeof ACTIVIDADES_TRAM !== 'undefined') {
-    var actActual = ACTIVIDADES_TRAM.find(function(a) { return a.num === String(step.actNum); });
-    if (actActual) {
-      var ordenActual = actActual.orden;
+  /* ── BLOQUEO POR DEPENDENCIAS EXPLÍCITAS ──────────────────────
+     Antes esto era una cadena lineal: para hacer cualquier paso,
+     TODAS las actividades de `orden` menor debían estar ejecutadas.
+     Eso hacía imposible el trabajo en paralelo — con Logística y
+     Contabilidad arrancando a la vez, la de `orden` mayor quedaba
+     bloqueada por la otra aunque no tuvieran nada que ver.
 
-      // Construir set de actNums ya ejecutados (según checks locales)
-      var ejecutados = {};
-      DAYS.forEach(function(d) {
-        d.steps.forEach(function(s, si) {
-          if (s.actNum && md.checks[d.day + '_' + si]) {
-            ejecutados[s.actNum] = true;
-          }
-        });
-      });
+     Ahora cada paso declara en `requiere: [nums]` de qué depende
+     realmente. Sin `requiere`, no espera a nadie.
 
-      // Buscar la primera actividad anterior (por orden) NO ejecutada
-      var pendiente = null;
-      for (var i = 0; i < ACTIVIDADES_TRAM.length; i++) {
-        var a = ACTIVIDADES_TRAM[i];
-        if (a.orden < ordenActual && !ejecutados[parseInt(a.num, 10)]) {
-          pendiente = a;
-          break;
+     Las dependencias vigentes están en js/data.js:
+       actNum 1  requiere 47  (Trámites espera las improntas)
+       actNum 15 requiere 12  (Trámites espera la factura)
+
+     Ojo: NO se bloquea la 11 ("Solicitar factura de venta") con la
+     12, porque Contabilidad no puede facturar hasta que Trámites
+     solicite — sería un abrazo mortal. Se bloquea el paso siguiente.
+     ────────────────────────────────────────────────────────────── */
+  if (step.actNum && step.requiere && step.requiere.length) {
+    // actNums ya ejecutados según los checks locales de esta moto
+    var ejecutados = {};
+    DAYS.forEach(function(d) {
+      d.steps.forEach(function(s, si) {
+        if (s.actNum && md.checks[d.day + '_' + si]) {
+          ejecutados[s.actNum] = true;
         }
-      }
+      });
+    });
 
-      if (pendiente) {
-        toast('⚠️ Esperando "' + pendiente.titulo + '" (' + pendiente.responsable + ')', 1);
-        return;
-      }
+    var faltante = null;
+    for (var q = 0; q < step.requiere.length; q++) {
+      if (!ejecutados[step.requiere[q]]) { faltante = step.requiere[q]; break; }
+    }
+
+    if (faltante !== null) {
+      var actF = (typeof ACTIVIDADES_TRAM !== 'undefined')
+        ? ACTIVIDADES_TRAM.find(function(a) { return a.num === String(faltante); })
+        : null;
+      toast('⚠️ Esperando "' + (actF ? actF.titulo : 'actividad ' + faltante) + '"' +
+            (actF ? ' (' + actF.responsable + ')' : ''), 1);
+      return;
     }
   }
 
   // ── Bloqueo LOCAL (dentro del área del usuario, comportamiento previo) ──
   var areaSteps = pUserArea ? day.steps.filter(function(s) { return s.c === pUserArea; }) : day.steps;
-  for (i = 0; i < areaSteps.length; i++) {
+  for (var i = 0; i < areaSteps.length; i++) {
     var oi = day.steps.indexOf(areaSteps[i]);
     var pk = dayNum + '_' + oi;
     if (oi === stepIdx) break;

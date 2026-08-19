@@ -4,6 +4,80 @@ Todas las versiones notables del Centro de Operaciones Dugomotos.
 
 ---
 
+## [2.4.0] — 2026-08-19
+
+> ⚠ **Requiere correr `sql/2026-08-19-logistica-y-arranque.sql` en Supabase.**
+> El frontend y la base tienen que ir juntos.
+
+### ✨ Arranque del proceso registrable + Logística
+
+Las actividades de arranque (facturas de compra, manifiestos, improntas) ya
+existían como pasos visibles del procedimiento pero **no se registraban**:
+no tenían `actividad_num`, así que no contaban para el avance ni quedaban
+en el histórico. Ahora sí.
+
+**6 actividades nuevas** (`actividad_num` 42-47, los siguientes libres):
+
+| num | actividad | responsable |
+|---:|---|---|
+| 42 | Recibir factura de compra | Contabilidad |
+| 43 | Imprimir factura de compra | Contabilidad |
+| 44 | Entregar facturas a trámites | Contabilidad |
+| 45 | Entregar manifiestos a trámites | Logística |
+| 46 | Obtener improntas de motos nuevas | Logística |
+| 47 | Entregar improntas a trámites | Logística |
+
+**No se crearon** "Adjuntar improntas" ni "Facturar motocicleta": ya existían
+como `actividad_num` 1 y 12, con histórico. Se unificaron sus nombres.
+
+**Ningún `actividad_num` existente cambió.** Todo el reordenamiento fue por
+la columna `orden`, ahora de 10 en 10 (10…470).
+
+### 🔀 Bloqueos por dependencia, no por fila india
+
+El bloqueo era una **cadena lineal**: para hacer cualquier paso, *todas* las
+actividades de `orden` menor debían estar ejecutadas. Con eso, Logística
+habría quedado esperando a Contabilidad solo por estar más abajo en la lista.
+
+Ahora cada paso declara de qué depende de verdad:
+
+```js
+{ t: 'Adjuntar improntas al manifiesto', actNum: 1,  requiere: [47] }
+{ t: 'Verificar plan de marca en factura', actNum: 15, requiere: [12] }
+```
+
+Sin `requiere`, no espera a nadie. Las reglas vigentes:
+
+- **Logística no depende de Contabilidad** — arrancan en paralelo.
+- **Trámites espera las improntas** para adjuntarlas al manifiesto (1 ← 47).
+- **La factura bloquea la actividad 15, no la 11.** Bloquear la 11
+  ("Solicitar factura de venta") habría sido un abrazo mortal: Contabilidad
+  no puede facturar hasta que Trámites solicite.
+
+### 🐛 Corregido
+
+- **`actividad_num` 38 ("Confirmar entrega")** figuraba como `Trámites` en
+  `data.js` y como `Logística` en Supabase. Ganaba `data.js`, que era el
+  equivocado.
+- **Logística no contaba para el avance.** `negGetScopeActs()` filtraba a
+  `Trámites || Contabilidad`. Sus actividades eran invisibles en el
+  porcentaje.
+
+  ⚠ El denominador pasó de 29 a **35** actividades (Trámites 27,
+  Contabilidad 4, Logística 4). El % de las motos en curso **baja** respecto
+  de lo que mostraba antes: no es un error, ahora se mide contra el proceso
+  completo. El backfill del SQL compensa la parte de arranque.
+
+### 📋 Nota sobre la fuente de verdad
+
+La app **todavía no lee `catalogo_actividades` desde Supabase**:
+`apiCatalogoConsultar()` existe pero nadie la llama. `js/data.js` es lo que
+manda para lo que se ve y lo que se bloquea; la tabla de Supabase queda para
+el registro y los reportes. **Los dos hay que mantenerlos sincronizados a
+mano** — de ahí venía el bug de la 38.
+
+---
+
 ## [2.3.0] — 2026-08-19
 
 ### ✨ La columna "Últ. actualización" ahora muestra la hora
