@@ -4,6 +4,60 @@ Todas las versiones notables del Centro de Operaciones Dugomotos.
 
 ---
 
+## [2.3.0] — 2026-08-19
+
+### ✨ La columna "Últ. actualización" ahora muestra la hora
+
+El formato anterior solo daba el día, así que no servía para saber cuánto
+llevaba parada una moto **dentro** de la jornada.
+
+```
+  antes                    ahora
+  18/08/2026   ayer        hoy 15:38          hace 20 min
+  30/07/2026   hace 20d    hoy 10:58          hace 5h
+                           ayer 15:58         hace 1d
+                           10/08/2026 15:58   hace 9d
+```
+
+- "hoy" y "ayer" reemplazan la fecha cuando corresponde; **la hora se
+  muestra siempre** que el dato la tenga.
+- El texto relativo ahora baja a horas y minutos dentro del día
+  (`recién`, `hace 25 min`, `hace 5h`).
+- "hoy"/"ayer" se calculan por **día de calendario en Bogotá**, no por
+  bloques de 24 horas: a las 00:30, algo de las 23:50 de anoche pasó hace
+  40 minutos pero dice "ayer", que es lo que espera cualquiera.
+- La hora se convierte a `America/Bogota`. Los timestamps de Supabase
+  llegan en UTC; sin convertir se mostrarían 5 horas corridas.
+- El *tooltip* de la celda siempre lleva la fecha completa, útil cuando
+  arriba dice solo "hoy".
+
+**Corregido de paso**: `negUltimaAct` priorizaba `fecha_registro` sobre
+`created_at`, pero hoy `pCheckStep` **no envía** `fecha_registro`
+(ver `procedimiento.js`), y si algún día se enviara como fecha sola se
+perdería la hora. Ahora se usa `fecha_registro` **solo si trae hora**;
+si no, gana `created_at`.
+
+### 🐛 El scroll ya no se reinicia al ordenar
+
+Con la tabla desplazada a la derecha, ordenar cualquier columna devolvía
+la vista al extremo izquierdo.
+
+**Causa**: `render()` reemplaza el `innerHTML` completo, así que el
+contenedor `.neg-table` se destruye y se vuelve a crear — y un elemento
+nuevo arranca en `scrollLeft = 0`. Es el costo del repintado total, no un
+error puntual.
+
+**Solución**: `negRender()` anota la posición del scroll, renderiza y la
+restaura.
+
+- **Al ordenar** son las mismas filas en otro orden → se conservan las dos
+  direcciones.
+- **Al filtrar** cambia el conjunto de filas → se conserva solo el
+  horizontal; mantener la altura podría dejarte mirando un vacío.
+- Los 12 manejadores de filtros y chips pasaron a usarlo.
+
+---
+
 ## [2.2.0] — 2026-08-19
 
 ### ✨ Nueva columna "Últ. actualización" en Negocios activos

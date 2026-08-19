@@ -311,10 +311,16 @@
 /* ============================================================
    Última actualización del proceso
    ============================================================
-   Dos datos en una línea: la fecha del último registro y, al
-   lado y más tenue, hace cuánto fue.
+   Dos datos en una línea:
 
-   El color avisa cuando el proceso lleva tiempo sin moverse
+     hoy 14:32          hace 3h
+     ayer 09:15         hace 1d
+     18/08/2026 14:32   hace 20d
+
+   La hora siempre a la vista cuando el dato la tiene: es lo que
+   permite ver cuánto lleva la moto sin moverse dentro del día.
+
+   El color avisa cuando el proceso lleva tiempo quieto
    (7 días = aviso, 15 = alerta). Se aplica a la fecha; el
    "hace Nd" queda siempre atenuado para no gritar dos veces.
    ============================================================ */
@@ -324,7 +330,8 @@
 .neg-ult-fecha{
   font-family:var(--fm);
   font-size:11px;
-  color:#888;
+  color:#aaa;
+  font-variant-numeric:tabular-nums;
 }
 .neg-ult-rel{
   font-size:10px;

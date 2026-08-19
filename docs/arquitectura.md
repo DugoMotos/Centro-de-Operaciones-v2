@@ -134,9 +134,15 @@ Cada módulo es **autocontenido**: tiene sus propias funciones de render y manej
 - `negSync()`: carga datos desde SharePoint.
 - `negSort(key)`: ordena por columna.
 - `negGetScopeActs()` / `negFirstPending()`: calculan la actividad actual de cada moto.
-- `negUltimaAct(actividades)`: fecha del último movimiento del proceso, para la
-  columna "Últ. actualización". Devuelve `{ ts, dias }`; `ts = 0` si la moto no
-  tiene actividades registradas.
+- `negUltimaAct(actividades)`: momento del último movimiento del proceso, para
+  la columna "Últ. actualización". Devuelve `{ ts, conHora, dias }`; `ts = 0` si
+  la moto no tiene actividades registradas. Usa `fecha_registro` solo si trae
+  hora; si no, `created_at`.
+- `negUltimaActTexto(ts, conHora, diasCal)`: arma el texto de la celda
+  (`hoy 15:38` + `hace 20 min`).
+- `negRender(conservarVertical)`: **usar en vez de `render()`** desde este
+  módulo. Conserva la posición del scroll de la tabla, que `render()` pierde
+  al reemplazar el `innerHTML`. Ver la nota de abajo.
 
 ### `js/modules/procedimiento.js`
 - El módulo más grande (~660 líneas).
@@ -258,6 +264,12 @@ Variables globales declaradas en `state.js`. Por ejemplo:
 3. **Ningún módulo llama `fetch` directo.** Va todo por `api.js`.
 4. **Subir el `?v=` de `index.html` en cada deploy**, o el equipo se queda
    con la versión cacheada.
+5. **Cuidado con el scroll al re-renderizar.** `render()` reemplaza todo el
+   `innerHTML`, así que cualquier contenedor con scroll se destruye y vuelve
+   a empezar en cero. Si agregás una tabla o lista con scroll, guardá y
+   restaurá la posición como hace `negRender()` en `negocios.js`. Este es el
+   costo del modelo de repintado total: no es un bug puntual, es algo que
+   reaparece con cada elemento desplazable nuevo.
 
 ---
 

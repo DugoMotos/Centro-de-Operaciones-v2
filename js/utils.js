@@ -122,6 +122,57 @@ function negParseFechaHora(v) {
   return isNaN(d.getTime()) ? null : d;
 }
 
+/* ¿El valor trae hora, o es solo una fecha?
+   '2026-08-19'            -> false (no hay hora que mostrar)
+   '2026-08-19T14:32:00Z'  -> true                              */
+function negTieneHora(v) {
+  if (v instanceof Date) return true;
+  return /\d{1,2}:\d{2}/.test(String(v || ''));
+}
+
+/* Hora en formato 24h de Bogotá (HH:MM).
+   Los timestamps de Supabase vienen en UTC: hay que convertirlos o
+   la hora se muestra corrida 5 horas. */
+function negFmtHora(v) {
+  var d = (v instanceof Date) ? v : new Date(v);
+  if (isNaN(d.getTime())) return '';
+  return new Intl.DateTimeFormat('es-CO', {
+    timeZone: 'America/Bogota',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }).format(d);
+}
+
+/* Día calendario en Bogotá como 'YYYY-MM-DD' */
+function negDiaBogota(v) {
+  var d = (v instanceof Date) ? v : new Date(v);
+  if (isNaN(d.getTime())) return '';
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Bogota',
+    year: 'numeric', month: '2-digit', day: '2-digit'
+  }).format(d);
+}
+
+/* ------------------------------------------------------------
+   Diferencia en días de CALENDARIO (Bogotá) entre una fecha y hoy.
+
+   Ojo: no es lo mismo que dividir milisegundos por 86400000. A las
+   00:30, algo registrado a las 23:50 de anoche pasó hace 40 minutos
+   pero es "ayer". Para el usuario manda el calendario, no las horas.
+   ------------------------------------------------------------ */
+function negDiasCalendario(v) {
+  var aStr = negDiaBogota(v);
+  var bStr = negDiaBogota(new Date());
+  if (!aStr || !bStr) return null;
+
+  var a = aStr.split('-');
+  var b = bStr.split('-');
+  var da = new Date(parseInt(a[0], 10), parseInt(a[1], 10) - 1, parseInt(a[2], 10));
+  var db = new Date(parseInt(b[0], 10), parseInt(b[1], 10) - 1, parseInt(b[2], 10));
+  return Math.round((db.getTime() - da.getTime()) / 86400000);
+}
+
 /* Días transcurridos desde fecha (soporta seriales de Excel, ISO, dd/mm/aaaa) */
 function negDiasDesde(fecha) {
   if (!fecha) return 0;

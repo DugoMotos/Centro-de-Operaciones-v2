@@ -1,6 +1,6 @@
 {
   "name": "centro-de-operaciones-v2",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Centro de Operaciones Dugomotos — gestión del procedimiento de venta y alistamiento de motocicletas",
   "private": true,
   "scripts": {

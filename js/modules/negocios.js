@@ -51,26 +51,87 @@ function negFirstPending(ejecutadasSet) {
    las ejecutadas: un "no aplica" también es movimiento del
    proceso) y se queda con la más reciente.
 
-   Prioriza `fecha_registro` (la fecha que reportó la persona)
-   sobre `created_at` (cuándo entró a la BD). Si alguien registra
-   hoy una actividad que hizo ayer, para el negocio vale ayer.
+   QUÉ FECHA USA — importa el detalle:
 
-   Devuelve { ts: <milisegundos>, dias: <número> }.
-   ts = 0 cuando la moto no tiene ninguna actividad registrada.
+   `fecha_registro` es la fecha de negocio (la que reportó la
+   persona) y `created_at` es cuándo entró el registro a la BD.
+
+   Hoy pCheckStep NO envía fecha_registro, así que en la práctica
+   viene vacía y el dato real es created_at. Pero si algún día se
+   empieza a mandar como fecha sola (sin hora), mostrarla haría
+   perder la hora — que es justo lo que sirve para saber cuánto
+   lleva parada la moto durante el día.
+
+   Por eso: se usa fecha_registro solo si TRAE HORA. Si no, gana
+   created_at.
+
+   Devuelve:
+     ts      milisegundos del último movimiento (0 = sin registros)
+     conHora si ese valor trae hora o es solo fecha
+     dias    días de CALENDARIO desde entonces (para el color)
    ============================================================ */
 function negUltimaAct(actividades) {
   var maxTs = 0;
+  var conHora = false;
 
   (actividades || []).forEach(function(r) {
-    var d = negParseFechaHora(r.fecha_registro || r.created_at);
+    var reg = r.fecha_registro || '';
+    var cre = r.created_at || '';
+
+    // Preferimos el valor que traiga hora
+    var elegido = negTieneHora(reg) ? reg : (cre || reg);
+    if (!elegido) return;
+
+    var d = negParseFechaHora(elegido);
     if (!d) return;
+
     var ts = d.getTime();
-    if (ts > maxTs) maxTs = ts;
+    if (ts > maxTs) {
+      maxTs = ts;
+      conHora = negTieneHora(elegido);
+    }
   });
 
   return {
     ts: maxTs,
-    dias: maxTs ? Math.max(0, Math.floor((Date.now() - maxTs) / 86400000)) : null
+    conHora: conHora,
+    dias: maxTs ? negDiasCalendario(maxTs) : null
+  };
+}
+
+/* ============================================================
+   negUltimaActTexto — Cómo se muestra en la celda
+   ============================================================
+   Devuelve { principal, relativo }.
+
+     hoy 14:32        · hace 3h
+     ayer 09:15       · hace 1d
+     18/08/2026 14:32 · hace 20d
+
+   La hora siempre está a la vista cuando el dato la tiene: es lo
+   que permite saber cuánto lleva sin moverse dentro del día.
+   ============================================================ */
+function negUltimaActTexto(ts, conHora, diasCal) {
+  var hora = conHora ? negFmtHora(ts) : '';
+
+  var fecha;
+  if (diasCal === 0) fecha = 'hoy';
+  else if (diasCal === 1) fecha = 'ayer';
+  else fecha = negFmtFecha(ts);
+
+  var ms = Date.now() - ts;
+  var mins = Math.floor(ms / 60000);
+  var horas = Math.floor(ms / 3600000);
+
+  var relativo;
+  if (diasCal === 0 && mins < 1) relativo = 'recién';
+  else if (diasCal === 0 && mins < 60) relativo = 'hace ' + mins + ' min';
+  else if (diasCal === 0) relativo = 'hace ' + horas + 'h';
+  else relativo = 'hace ' + diasCal + 'd';
+
+  return {
+    principal: (fecha + (hora ? ' ' + hora : '')).trim(),
+    relativo: relativo
   };
 }
 
@@ -160,7 +221,7 @@ function renderNegocios() {
       asesor: asesor, fecha: fecha, dias: dias, pct: pct,
       proc: procLabel, procArea: procArea, procCls: procCls,
       tipo: tipo,
-      ultActTs: ultAct.ts, ultActDias: ultAct.dias
+      ultActTs: ultAct.ts, ultActDias: ultAct.dias, ultActConHora: ultAct.conHora
     };
   }).filter(function(r) { return r.code; });
 
@@ -202,13 +263,13 @@ function renderNegocios() {
   h += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">';
   h += '<div style="flex:1;min-width:220px;position:relative">';
   h += '<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--tm);font-size:13px">🔍</span>';
-  h += '<input type="text" class="inp" id="negSearchInput" placeholder="Buscar código, cliente, asesor, actividad..." value="' + esc(negSearchTxt) + '" oninput="negSearchTxt=this.value;render();setTimeout(function(){var el=document.getElementById(\'negSearchInput\');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},0)" style="padding-left:32px;padding-right:32px;font-size:12px;height:34px">';
+  h += '<input type="text" class="inp" id="negSearchInput" placeholder="Buscar código, cliente, asesor, actividad..." value="' + esc(negSearchTxt) + '" oninput="negSearchTxt=this.value;negRender();setTimeout(function(){var el=document.getElementById(\'negSearchInput\');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},0)" style="padding-left:32px;padding-right:32px;font-size:12px;height:34px">';
   if (negSearchTxt) {
-    h += '<span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--tm);font-size:16px;cursor:pointer;line-height:1" onclick="negSearchTxt=\'\';render()" title="Limpiar búsqueda">×</span>';
+    h += '<span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--tm);font-size:16px;cursor:pointer;line-height:1" onclick="negSearchTxt=\'\';negRender()" title="Limpiar búsqueda">×</span>';
   }
   h += '</div>';
 
-  h += '<select class="neg-select" style="height:34px;min-width:130px" onchange="negFilterArea=this.value;render()">' +
+  h += '<select class="neg-select" style="height:34px;min-width:130px" onchange="negFilterArea=this.value;negRender()">' +
     '<option value=""' + (negFilterArea === '' ? ' selected' : '') + '>Todas las áreas</option>' +
     '<option value="Trámites"' + (negFilterArea === 'Trámites' ? ' selected' : '') + '>Trámites</option>' +
     '<option value="Contabilidad"' + (negFilterArea === 'Contabilidad' ? ' selected' : '') + '>Contabilidad</option>' +
@@ -216,7 +277,7 @@ function renderNegocios() {
     '<option value="Inventario"' + (negFilterArea === 'Inventario' ? ' selected' : '') + '>Inventario</option>' +
     '</select>';
 
-  h += '<select class="neg-select" style="height:34px;min-width:120px" onchange="negFilterMarca=this.value;render()">' +
+  h += '<select class="neg-select" style="height:34px;min-width:120px" onchange="negFilterMarca=this.value;negRender()">' +
     '<option value=""' + (negFilterMarca === '' ? ' selected' : '') + '>Todas las marcas</option>' +
     '<option value="HERO"' + (negFilterMarca === 'HERO' ? ' selected' : '') + '>Hero</option>' +
     '<option value="SYM"' + (negFilterMarca === 'SYM' ? ' selected' : '') + '>SYM</option>' +
@@ -224,7 +285,7 @@ function renderNegocios() {
     '<option value="OTRA"' + (negFilterMarca === 'OTRA' ? ' selected' : '') + '>Otra</option>' +
     '</select>';
 
-  h += '<select class="neg-select" style="height:34px;min-width:150px" onchange="negFilterTipo=this.value;render()">' +
+  h += '<select class="neg-select" style="height:34px;min-width:150px" onchange="negFilterTipo=this.value;negRender()">' +
     '<option value=""' + (negFilterTipo === '' ? ' selected' : '') + '>Todos los tipos</option>' +
     '<option value="nd"' + (negFilterTipo === 'nd' ? ' selected' : '') + '>Nueva Distribución</option>' +
     '<option value="ns"' + (negFilterTipo === 'ns' ? ' selected' : '') + '>Subdistribución</option>' +
@@ -232,7 +293,7 @@ function renderNegocios() {
     '</select>';
 
   // Dropdown de asesores
-  h += '<select class="neg-select" style="height:34px;min-width:150px" onchange="negFilterAsesor=this.value;render()">';
+  h += '<select class="neg-select" style="height:34px;min-width:150px" onchange="negFilterAsesor=this.value;negRender()">';
   h += '<option value=""' + (negFilterAsesor === '' ? ' selected' : '') + '>Todos los asesores</option>';
   if (negAsesores && negAsesores.length) {
     negAsesores.forEach(function(a) {
@@ -250,23 +311,23 @@ function renderNegocios() {
     h += '<div style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 0;border-top:0.5px solid var(--bd);border-bottom:0.5px solid var(--bd);margin-bottom:10px;align-items:center">';
     h += '<span style="font-size:10px;color:var(--tm);margin-right:4px">FILTROS ACTIVOS:</span>';
     if (negFilterArea) {
-      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + esc(negFilterArea) + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterArea=\'\';render()">×</span></span>';
+      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + esc(negFilterArea) + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterArea=\'\';negRender()">×</span></span>';
     }
     if (negFilterMarca) {
       var mLabel = negFilterMarca === 'HERO' ? 'Hero' : negFilterMarca === 'SYM' ? 'SYM' : negFilterMarca === 'BAJAJ' ? 'Bajaj' : 'Otra';
-      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + mLabel + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterMarca=\'\';render()">×</span></span>';
+      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + mLabel + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterMarca=\'\';negRender()">×</span></span>';
     }
     if (negFilterTipo) {
       var tLabel = negFilterTipo === 'nd' ? 'Nueva Distribución' : negFilterTipo === 'ns' ? 'Subdistribución' : 'Usadas';
-      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + tLabel + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterTipo=\'\';render()">×</span></span>';
+      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + tLabel + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterTipo=\'\';negRender()">×</span></span>';
     }
     if (negFilterAsesor) {
-      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + esc(negFilterAsesor) + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterAsesor=\'\';render()">×</span></span>';
+      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">' + esc(negFilterAsesor) + ' <span style="cursor:pointer;font-weight:700" onclick="negFilterAsesor=\'\';negRender()">×</span></span>';
     }
     if (negSearchTxt) {
-      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">"' + esc(negSearchTxt) + '" <span style="cursor:pointer;font-weight:700" onclick="negSearchTxt=\'\';render()">×</span></span>';
+      h += '<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 10px;border-radius:12px;background:var(--bll);color:var(--bld);font-weight:600">"' + esc(negSearchTxt) + '" <span style="cursor:pointer;font-weight:700" onclick="negSearchTxt=\'\';negRender()">×</span></span>';
     }
-    h += '<span style="font-size:11px;color:var(--bl);cursor:pointer;margin-left:6px;text-decoration:underline" onclick="negFilterArea=\'\';negFilterMarca=\'\';negFilterTipo=\'\';negFilterAsesor=\'\';negSearchTxt=\'\';render()">Limpiar todos</span>';
+    h += '<span style="font-size:11px;color:var(--bl);cursor:pointer;margin-left:6px;text-decoration:underline" onclick="negFilterArea=\'\';negFilterMarca=\'\';negFilterTipo=\'\';negFilterAsesor=\'\';negSearchTxt=\'\';negRender()">Limpiar todos</span>';
     h += '</div>';
   }
 
@@ -362,12 +423,14 @@ function renderNegocios() {
         var ultCls = r.ultActDias >= 15 ? ' neg-ult-danger'
                    : r.ultActDias >= 7  ? ' neg-ult-warn'
                    : '';
-        var rel = r.ultActDias === 0 ? 'hoy'
-                : r.ultActDias === 1 ? 'ayer'
-                : 'hace ' + r.ultActDias + 'd';
-        h += '<td class="neg-ult-cell' + ultCls + '" title="Último registro: ' + esc(rel) + '">' +
-             '<span class="neg-ult-fecha">' + negFmtFecha(r.ultActTs) + '</span>' +
-             '<span class="neg-ult-rel">' + esc(rel) + '</span>' +
+        var ult = negUltimaActTexto(r.ultActTs, r.ultActConHora, r.ultActDias);
+        // El title lleva la fecha completa, útil cuando arriba dice "hoy"
+        var titulo = negFmtFecha(r.ultActTs) +
+                     (r.ultActConHora ? ' ' + negFmtHora(r.ultActTs) : ' (sin hora registrada)') +
+                     ' · ' + ult.relativo;
+        h += '<td class="neg-ult-cell' + ultCls + '" title="' + esc(titulo) + '">' +
+             '<span class="neg-ult-fecha">' + esc(ult.principal) + '</span>' +
+             '<span class="neg-ult-rel">' + esc(ult.relativo) + '</span>' +
              '</td>';
       } else {
         h += '<td class="neg-ult-cell neg-ult-vacio" title="Esta moto no tiene ninguna actividad registrada">Sin registros</td>';
@@ -386,6 +449,39 @@ function renderNegocios() {
   return h;
 }
 
+/* ============================================================
+   negRender — render() que no pierde la posición del scroll
+   ============================================================
+   El problema: render() reemplaza el innerHTML completo del área
+   principal, así que el contenedor .neg-table se destruye y se
+   vuelve a crear. Un elemento nuevo arranca con scrollLeft = 0,
+   y por eso la tabla "saltaba" al principio cada vez que se
+   ordenaba una columna teniendo el scroll a la derecha.
+
+   La solución: anotar dónde estaba el scroll, renderizar, y
+   devolverlo a su lugar.
+
+   conservarVertical:
+     - Al ORDENAR son las mismas filas en otro orden: se conservan
+       las dos direcciones.
+     - Al FILTRAR cambia el conjunto de filas, así que mantener la
+       altura no tiene sentido (podés quedar en un vacío). Se
+       conserva solo el horizontal, que es el que molesta.
+   ============================================================ */
+function negRender(conservarVertical) {
+  var prev = document.querySelector('.neg-table');
+  var x = prev ? prev.scrollLeft : 0;
+  var y = prev ? prev.scrollTop : 0;
+
+  render();
+
+  var nuevo = document.querySelector('.neg-table');
+  if (!nuevo) return;
+
+  nuevo.scrollLeft = x;
+  if (conservarVertical) nuevo.scrollTop = y;
+}
+
 function negSort(key) {
   if (negSortKey === key) {
     negSortDir = negSortDir === 'asc' ? 'desc' : 'asc';
@@ -393,7 +489,7 @@ function negSort(key) {
     negSortKey = key;
     negSortDir = 'asc';
   }
-  render();
+  negRender(true);
 }
 
 function negSync() {
